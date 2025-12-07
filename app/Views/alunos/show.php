@@ -158,7 +158,7 @@
                                 <?= htmlspecialchars($aluno['telefone_pai'], ENT_QUOTES, 'UTF-8') ?>
                             </a>
                         <?php else: ?>
-                            <span style="color: var(--text-secondary);">-</span>
+                            -
                         <?php endif; ?>
                     </dd>
                 </div>
@@ -171,7 +171,7 @@
                                 <?= htmlspecialchars($aluno['email_pai'], ENT_QUOTES, 'UTF-8') ?>
                             </a>
                         <?php else: ?>
-                            <span style="color: var(--text-secondary);">-</span>
+                            -
                         <?php endif; ?>
                     </dd>
                 </div>
@@ -184,7 +184,7 @@
                                 <?= htmlspecialchars($aluno['telegram_pai'], ENT_QUOTES, 'UTF-8') ?>
                             </a>
                         <?php else: ?>
-                            <span style="color: var(--text-secondary);">-</span>
+                            -
                         <?php endif; ?>
                     </dd>
                 </div>
@@ -202,7 +202,7 @@
                                 <?= htmlspecialchars($aluno['telefone_mae'], ENT_QUOTES, 'UTF-8') ?>
                             </a>
                         <?php else: ?>
-                            <span style="color: var(--text-secondary);">-</span>
+                            -
                         <?php endif; ?>
                     </dd>
                 </div>
@@ -215,7 +215,7 @@
                                 <?= htmlspecialchars($aluno['email_mae'], ENT_QUOTES, 'UTF-8') ?>
                             </a>
                         <?php else: ?>
-                            <span style="color: var(--text-secondary);">-</span>
+                            -
                         <?php endif; ?>
                     </dd>
                 </div>
@@ -228,7 +228,7 @@
                                 <?= htmlspecialchars($aluno['telegram_mae'], ENT_QUOTES, 'UTF-8') ?>
                             </a>
                         <?php else: ?>
-                            <span style="color: var(--text-secondary);">-</span>
+                            -
                         <?php endif; ?>
                     </dd>
                 </div>

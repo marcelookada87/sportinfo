@@ -34,46 +34,52 @@
     </div>
 <?php endif; ?>
 
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header">
+        <h3 class="card-title">Filtros de Busca</h3>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="<?= BASE_URL ?>/alunos" class="search-form" id="filterForm">
+            <div class="filter-group">
+                <input 
+                    type="text" 
+                    name="search" 
+                    id="searchInput"
+                    placeholder="Buscar por nome, CPF ou email..." 
+                    value="<?= htmlspecialchars($filters['search'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                    class="form-control filter-input"
+                >
+            </div>
+            <div class="filter-group">
+                <select name="status" id="statusFilter" class="form-control filter-select">
+                    <option value="">Todos os status</option>
+                    <option value="Ativo" <?= ($filters['status'] ?? '') === 'Ativo' ? 'selected' : '' ?>>Ativo</option>
+                    <option value="Inativo" <?= ($filters['status'] ?? '') === 'Inativo' ? 'selected' : '' ?>>Inativo</option>
+                    <option value="Suspenso" <?= ($filters['status'] ?? '') === 'Suspenso' ? 'selected' : '' ?>>Suspenso</option>
+                    <option value="Cancelado" <?= ($filters['status'] ?? '') === 'Cancelado' ? 'selected' : '' ?>>Cancelado</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <button type="submit" class="btn btn-primary">
+                    <span class="btn-icon">🔍</span>
+                    Buscar
+                </button>
+            </div>
+            <?php if (!empty($filters['search']) || !empty($filters['status'])): ?>
+            <div class="filter-group">
+                <a href="<?= BASE_URL ?>/alunos" class="btn btn-secondary">
+                    <span class="btn-icon">✕</span>
+                    Limpar
+                </a>
+            </div>
+            <?php endif; ?>
+        </form>
+    </div>
+</div>
+
 <div class="card">
     <div class="card-header">
         <h3 class="card-title">Lista de Alunos</h3>
-        <div class="card-actions">
-            <form method="GET" action="<?= BASE_URL ?>/alunos" class="search-form" id="filterForm">
-                <div class="filter-group">
-                    <input 
-                        type="text" 
-                        name="search" 
-                        id="searchInput"
-                        placeholder="Buscar por nome, CPF ou email..." 
-                        value="<?= htmlspecialchars($filters['search'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                        class="form-control filter-input"
-                    >
-                </div>
-                <div class="filter-group">
-                    <select name="status" id="statusFilter" class="form-control filter-select">
-                        <option value="">Todos os status</option>
-                        <option value="Ativo" <?= ($filters['status'] ?? '') === 'Ativo' ? 'selected' : '' ?>>Ativo</option>
-                        <option value="Inativo" <?= ($filters['status'] ?? '') === 'Inativo' ? 'selected' : '' ?>>Inativo</option>
-                        <option value="Suspenso" <?= ($filters['status'] ?? '') === 'Suspenso' ? 'selected' : '' ?>>Suspenso</option>
-                        <option value="Cancelado" <?= ($filters['status'] ?? '') === 'Cancelado' ? 'selected' : '' ?>>Cancelado</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <button type="submit" class="btn btn-primary">
-                        <span class="btn-icon">🔍</span>
-                        Buscar
-                    </button>
-                </div>
-                <?php if (!empty($filters['search']) || !empty($filters['status'])): ?>
-                <div class="filter-group">
-                    <a href="<?= BASE_URL ?>/alunos" class="btn btn-secondary">
-                        <span class="btn-icon">✕</span>
-                        Limpar
-                    </a>
-                </div>
-                <?php endif; ?>
-            </form>
-        </div>
     </div>
     
     <div class="card-body">

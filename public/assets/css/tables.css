@@ -1,0 +1,85 @@
+/* Estilos específicos para tabelas */
+
+.table-wrapper {
+    overflow-x: auto;
+    margin-bottom: 1rem;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--bg-primary);
+}
+
+table th[data-sort] {
+    position: relative;
+    user-select: none;
+}
+
+table th[data-sort]::after {
+    content: " ↕";
+    opacity: 0.5;
+    font-size: 0.875rem;
+}
+
+table th.sort-asc::after {
+    content: " ↑";
+    opacity: 1;
+}
+
+table th.sort-desc::after {
+    content: " ↓";
+    opacity: 1;
+}
+
+table tbody tr {
+    transition: background-color 0.2s;
+}
+
+table tbody tr:hover {
+    background-color: var(--bg-secondary);
+}
+
+table tbody tr.selected {
+    background-color: rgba(37, 99, 235, 0.1);
+}
+
+table .actions {
+    white-space: nowrap;
+}
+
+table .actions button,
+table .actions a {
+    margin-right: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+table .badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+table .badge-success {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+table .badge-danger {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+table .badge-warning {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+table .badge-info {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+

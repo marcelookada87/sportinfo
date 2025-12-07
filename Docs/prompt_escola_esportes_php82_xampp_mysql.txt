@@ -1,0 +1,186 @@
+
+PROMPT / ESPECIFICAÇÃO FUNCIONAL
+Sistema Web de Escola de Esportes (Natação, Lutas, Futebol, etc.)
+Stack: XAMPP (Apache + PHP 8.2), MySQL 8, MVC próprio com Composer (PSR‑4), mod_rewrite, PDO
+
+====================================
+ETAPA 0 — VISÃO GERAL
+====================================
+Objetivo: construir um sistema web completo para gestão de uma escola de esportes sem uso de frameworks, rodando em XAMPP com PHP 8.2, MySQL e Apache. O sistema cobre: alunos, turmas/horários, professores, modalidades/categorias, frequência, avaliações, módulo financeiro (mensalidades, recebimentos, formas de pagamento, PIX), relatórios, segurança (OWASP) e conformidade (LGPD), além de acessibilidade (WCAG 2.2).
+— PHP 8.2 traz recursos úteis (classes readonly, tipos DNF, true/false/null como tipos, atributo #[SensitiveParameter]) que melhoram tipagem e proteção de dados sensíveis em backtraces. citeturn2search81turn2search82
+— Padrões PSR garantem interoperabilidade: PSR‑12 (estilo), PSR‑4 (autoloading). citeturn2search74turn2search86
+— Segurança: seguir OWASP Top 10 (2021) como baseline. citeturn2search104
+— LGPD/ANPD: atender direitos dos titulares e fluxos de comunicação de incidentes conforme a ANPD. citeturn2search116
+— Acessibilidade: WCAG 2.2 (AA) para foco visível, autenticação acessível e ajuda localizável. citeturn2search110
+
+====================================
+ETAPA 1 — ARQUITETURA & STACK (XAMPP)
+====================================
+1.1 Servidor Web
+- Apache do XAMPP com suporte a .htaccess e mod_rewrite para roteamento amigável. Habilitar o módulo e AllowOverride All conforme documentação do Apache/mod_rewrite e guias de XAMPP. citeturn2search94turn2search93turn2search96
+- Arquivo .htaccess na pasta public/ para enviar todas as requisições ao front controller (index.php).
+
+1.2 Linguagem
+- PHP 8.2 (XAMPP já inclui) com strict_types e tipagem: usar recursos de 8.2 para aumentar segurança e manutenção. citeturn2search81turn2search82
+
+1.3 Dependências
+- Composer (instalável em Windows e integrável ao PHP do XAMPP) para gerenciar bibliotecas como Monolog e Dotenv; seguir passos de instalação e apontar para php.exe do XAMPP. citeturn2search99turn2search100
+- PSR‑4 para autoload do seu MVC (ver composer.json). citeturn2search86
+
+1.4 Banco de Dados
+- MySQL 8 (XAMPP/MySQL) com engine InnoDB, PK em todas as tabelas, FKs consistentes com tipos idênticos, transações, e evitar LOCK TABLES — preferir SELECT … FOR UPDATE. citeturn2search122
+
+====================================
+ETAPA 2 — ESTRUTURA DE PASTAS (MVC simples)
+====================================
+project-root/
+├─ app/
+│  ├─ Core/              (Router.php, Controller.php, Model.php, View.php)
+│  ├─ Controllers/       (AlunosController.php, FinanceiroController.php, etc.)
+│  ├─ Models/            (Aluno.php, Professor.php, Turma.php, Mensalidade.php, etc.)
+│  └─ Views/             (templates PHP: header.php, footer.php, alunos/*.php)
+├─ config/
+│  ├─ config.php         (constantes, timezone, base_url)
+│  └─ database.php       (DSN PDO, credenciais)
+├─ public/
+│  ├─ index.php          (front controller + bootstrap)
+│  └─ .htaccess          (rotas amigáveis via mod_rewrite)
+├─ storage/
+│  └─ logs/              (logs de aplicação)
+├─ vendor/               (Composer)
+└─ composer.json         (autoload PSR‑4)
+
+PSR‑4 exige mapeamento entre namespace e diretórios; garantir case‑sensitive em classes/nomes. citeturn2search86turn2search88
+
+====================================
+ETAPA 3 — ROTEAMENTO (Apache + Front Controller)
+====================================
+3.1 .htaccess (exemplo)
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [L]
+— Habilite mod_rewrite e AllowOverride All no Apache do XAMPP; reinicie Apache para aplicar. citeturn2search94turn2search96
+
+3.2 Router.php
+- Interpretar PATH_INFO/REQUEST_URI, mapear para Controller@action e parâmetros; suportar métodos GET/POST. (PSR‑12 para estilo de código) citeturn2search74
+
+====================================
+ETAPA 4 — MODELOS (PDO + InnoDB)
+====================================
+4.1 Conexão
+- PDO com DSN (charset UTF‑8), exceptions, prepared statements.
+
+4.2 Princípios de schema
+- InnoDB, PK explícita, FKs com tipos iguais e índices apropriados nas colunas referenciadas; transações para operações financeiras; evitar LOCK TABLES. citeturn2search122
+
+4.3 Entidades & Campos
+- alunos(id, nome, cpf/cpf_responsavel, dt_nascimento, sexo, contato, email, endereco, status, dt_cadastro)
+- responsaveis(id, nome, cpf, contato, email)
+- professores(id, nome, cpf, registro_cref, contato, email, especialidade, status)
+- modalidades(id, nome, categoria_etaria)
+- turmas(id, modalidade_id, professor_id, nome, nivel, capacidade, local, dias_da_semana[], hora_inicio, hora_fim)
+- matriculas(id, aluno_id, turma_id, dt_inicio, dt_fim, status, plano_id)
+- presencas(id, matricula_id, data, status[Presente/Falta/Reposição])
+- avaliacoes(id, aluno_id, modalidade_id, data, notas_json, observacoes)
+- planos(id, nome, periodicidade[mensal/trimestral/anual], valor_base, descricao)
+- mensalidades(id, matricula_id, competencia(YYYY-MM), valor, desconto, multa, juros, status[Aberto/Pago/Atrasado], dt_geracao)
+- pagamentos(id, mensalidade_id, forma[PIX/Cartão/Dinheiro/Boleto], valor_pago, dt_pagamento, transacao_ref, conciliado)
+- caixa_movimentos(id, tipo[Receita/Despesa], origem[mensalidade/ajuste], valor, dt_movimento, observacao)
+- usuarios(id, nome, email, senha_hash, perfil[Admin/Financeiro/Professor/Atendente], ativo)
+- audit_logs(id, usuario_id, entidade, entidade_id, acao, antes_json, depois_json, dt_evento)
+
+====================================
+ETAPA 5 — MÓDULOS FUNCIONAIS
+====================================
+5.1 Acadêmico
+- Cadastro de Alunos/Responsáveis; Professores; Modalidades/Categorias.
+- Turmas & Horários: capacidade, local, dias/horas; evitar conflitos de agenda.
+- Matrículas: fluxo completo (matricular, trocar turma, suspender/cancelar) com geração automática de mensalidades.
+- Presenças & Avaliações: registro diário e histórico.
+
+5.2 Financeiro
+- Planos, Mensalidades, Faturas por competência; regras de desconto/bolsas; multa/juros por atraso.
+- Pagamentos: registrar manual (dinheiro/cartão); integração com **PIX** (QR estatico/dinâmico, “copia e cola”) seguindo o **Manual de Padrões para Iniciação do Pix (2.9.0)** e/ou versão vigente. citeturn2search128
+- Conciliação: cruzar mensalidades pagas vs recebimentos; lançar em caixa automaticamente.
+
+5.3 Relatórios
+- Acadêmicos: frequência por turma/aluno, taxa de ocupação, evolução de avaliações.
+- Financeiros: receita por período/modalidade, inadimplência, fluxo de caixa, conciliação.
+- Exportação CSV/XLSX e impressão.
+
+====================================
+ETAPA 6 — SEGURANÇA (OWASP) & LGPD
+====================================
+6.1 Segurança de Aplicação
+- Aplicar controles do **OWASP Top 10 (2021)**: Broken Access Control, Cryptographic Failures, Injection, Insecure Design, Security Misconfiguration, Vulnerable Components, Auth Failures, Integrity Failures, Logging/Monitoring, SSRF. Criar checklist de testes e políticas de revisão. citeturn2search104
+
+6.2 Boas práticas específicas
+- Autenticação: senhas com password_hash Argon2/BCrypt; lockout e rate limit; sessão com cookies HttpOnly/Secure.
+- Autorização: RBAC por perfil; verificação em cada rota/controlador.
+- Inputs: validação e escaping; prepared statements (PDO) para SQL.
+- Logs: usar **Monolog** (PSR‑3) via Composer; NUNCA logar senhas, tokens, dados financeiros completos. citeturn2search99
+
+6.3 LGPD/ANPD
+- Definir bases legais (contrato/legítimo interesse), minimização, transparência, direitos do titular (acesso/retificação/eliminação/portabilidade), e fluxo de **comunicação de incidentes** conforme orientações e serviços da ANPD (formulário oficial). citeturn2search116
+
+====================================
+ETAPA 7 — ACESSIBILIDADE (WCAG 2.2 AA)
+====================================
+- Foco visível e não obstruído (2.4.11), aparência mínima do foco (2.4.13), reduzir gestos complexos (2.5.7), ajuda localizável (3.2.6), autenticação acessível (3.3.8). citeturn2search110
+
+====================================
+ETAPA 8 — DEV & QUALIDADE
+====================================
+- PSR‑12 no estilo; revisões e lints; nomes de classes/diretórios compatíveis com PSR‑4.
+- Testes de unidade (Model/Service), integração (Controller/Router) e segurança (CSRF/XSS/SQLi). citeturn2search74turn2search86
+
+====================================
+ETAPA 9 — PERFORMANCE
+====================================
+- Índices em colunas de filtros/joins; uso de EXPLAIN para otimizar; evitar N+1 com consultas agregadas; transações agrupadas no financeiro; evitar LOCK TABLES. citeturn2search122
+
+====================================
+ETAPA 10 — ROADMAP
+====================================
+Fase 1: cadastros, turmas, matrículas, presenças, relatórios básicos.
+Fase 2: financeiro completo (planos, mensalidades, pagamentos, PIX), conciliação.
+Fase 3: BI avançado, app mobile, integrações externas.
+
+====================================
+ANEXOS PRÁTICOS
+====================================
+A) composer.json (PSR‑4)
+{
+  "name": "escola/esportes",
+  "require": {
+    "monolog/monolog": "^3.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "app/"
+    }
+  }
+}
+— Após editar, execute `composer dump-autoload`. Garanta case correto em diretórios e classes (ex.: `app/Controllers/AlunosController.php` para `App\\Controllers\\AlunosController`). citeturn2search86turn2search88
+
+B) .htaccess (public/)
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [L]
+— Se não funcionar, confirme mod_rewrite ativo e AllowOverride All no Apache do XAMPP. citeturn2search94turn2search96
+
+C) Checklist de mod_rewrite no XAMPP
+1) Descomentar `LoadModule rewrite_module modules/mod_rewrite.so` no httpd.conf. 2) Ajustar `AllowOverride All` no bloco do DocumentRoot. 3) Reiniciar Apache. citeturn2search93
+
+====================================
+REFERÊNCIAS
+- PHP 8.2 novas features / mudança de linguagem: PHP.Watch, Kinsta (readonly, DNF, sensitive parameter). citeturn2search81turn2search82
+- PSR‑12 (estilo) e PSR‑4 (autoloading): PHP‑FIG. citeturn2search74turn2search86
+- Apache mod_rewrite / .htaccess e habilitação no XAMPP: Apache docs + guias (StackOverflow, TecAdmin). citeturn2search94turn2search93turn2search96
+- MySQL InnoDB boas práticas (PK, FK, transações, evitar LOCK TABLES): manual oficial. citeturn2search122
+- OWASP Top 10 (2021) — categorias e mitigação: OWASP. citeturn2search104
+- LGPD/ANPD — portal oficial e serviços (direitos, comunicação de incidentes). citeturn2search116
+- WCAG 2.2 (AA) — diretrizes atuais: W3C. citeturn2search110
+- PIX — Manual de Padrões para Iniciação (2.9.0): BCB. citeturn2search128

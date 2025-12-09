@@ -77,6 +77,16 @@ $router->get('/matriculas/{id}/edit', 'MatriculasController', 'edit');
 $router->post('/matriculas/{id}', 'MatriculasController', 'update');
 $router->post('/matriculas/{id}/delete', 'MatriculasController', 'delete');
 
+// Rotas de Turmas
+$router->get('/turmas', 'TurmasController', 'index');
+$router->get('/turmas/create', 'TurmasController', 'create');
+$router->post('/turmas', 'TurmasController', 'store');
+$router->get('/turmas/aluno/{aluno_id}/horarios', 'TurmasController', 'getAlunoHorarios');
+$router->get('/turmas/{id}', 'TurmasController', 'show');
+$router->get('/turmas/{id}/edit', 'TurmasController', 'edit');
+$router->post('/turmas/{id}', 'TurmasController', 'update');
+$router->post('/turmas/{id}/delete', 'TurmasController', 'delete');
+
 // Resolve rota
 $router->resolve();
 

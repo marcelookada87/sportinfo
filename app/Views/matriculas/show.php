@@ -34,7 +34,7 @@
                     <dt>Nome</dt>
                     <dd>
                         <strong><?= htmlspecialchars($matricula['aluno_nome'], ENT_QUOTES, 'UTF-8') ?></strong>
-                        <a href="<?= BASE_URL ?>/alunos/<?= $matricula['aluno_id'] ?>" class="btn btn-sm btn-secondary" style="margin-left: 0.5rem;">Ver Aluno</a>
+                        <a href="<?= BASE_URL ?>/alunos/<?= $matricula['aluno_id'] ?>" class="btn btn-sm btn-primary" style="margin-left: 0.5rem; color: white;">Ver Aluno</a>
                     </dd>
                 </div>
                 
@@ -65,7 +65,7 @@
                     <dt>Modalidade</dt>
                     <dd>
                         <span class="badge badge-secondary"><?= htmlspecialchars($matricula['modalidade_nome'], ENT_QUOTES, 'UTF-8') ?></span>
-                        <a href="<?= BASE_URL ?>/modalidades/<?= $matricula['modalidade_id'] ?>" class="btn btn-sm btn-secondary" style="margin-left: 0.5rem;">Ver Modalidade</a>
+                        <a href="<?= BASE_URL ?>/modalidades/<?= $matricula['modalidade_id'] ?>" class="btn btn-sm btn-primary" style="margin-left: 0.5rem; color: white;">Ver Modalidade</a>
                     </dd>
                 </div>
                 
@@ -80,7 +80,7 @@
                     <dt>Professor</dt>
                     <dd>
                         <?= htmlspecialchars($matricula['professor_nome'], ENT_QUOTES, 'UTF-8') ?>
-                        <a href="<?= BASE_URL ?>/professores/<?= $matricula['professor_id'] ?>" class="btn btn-sm btn-secondary" style="margin-left: 0.5rem;">Ver Professor</a>
+                        <a href="<?= BASE_URL ?>/professores/<?= $matricula['professor_id'] ?>" class="btn btn-sm btn-primary" style="margin-left: 0.5rem; color: white;">Ver Professor</a>
                     </dd>
                 </div>
                 

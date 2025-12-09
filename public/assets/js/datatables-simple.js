@@ -114,6 +114,7 @@
             initDataTable('modalidadesTable');
             initDataTable('planosTable');
             initDataTable('matriculasTable');
+            initDataTable('turmasTable');
         });
     } else {
         initDataTable('alunosTable');
@@ -121,6 +122,7 @@
         initDataTable('modalidadesTable');
         initDataTable('planosTable');
         initDataTable('matriculasTable');
+        initDataTable('turmasTable');
     }
 })();
 

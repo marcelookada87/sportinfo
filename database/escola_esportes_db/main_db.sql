@@ -106,17 +106,59 @@ CREATE TABLE IF NOT EXISTS `professores` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `nome` VARCHAR(255) NOT NULL,
     `cpf` VARCHAR(14) NOT NULL,
+    `rg` VARCHAR(20) DEFAULT NULL,
+    `dt_nascimento` DATE DEFAULT NULL,
+    `sexo` ENUM('M', 'F', 'Outro') DEFAULT NULL,
     `registro_cref` VARCHAR(50) DEFAULT NULL,
     `contato` VARCHAR(20) NOT NULL,
     `email` VARCHAR(255) DEFAULT NULL,
+    `endereco` TEXT DEFAULT NULL,
+    `formacao_academica` TEXT DEFAULT NULL COMMENT 'Formação acadêmica do professor',
+    `certificacoes` TEXT DEFAULT NULL COMMENT 'Certificações e qualificações',
+    `experiencia_profissional` TEXT DEFAULT NULL COMMENT 'Experiência profissional',
     `especialidade` VARCHAR(255) DEFAULT NULL,
+    `valor_hora` DECIMAL(10,2) DEFAULT NULL COMMENT 'Valor por hora de aula',
+    `banco_nome` VARCHAR(255) DEFAULT NULL COMMENT 'Nome do banco',
+    `banco_agencia` VARCHAR(20) DEFAULT NULL COMMENT 'Agência bancária',
+    `banco_conta` VARCHAR(50) DEFAULT NULL COMMENT 'Conta bancária',
+    `banco_tipo_conta` ENUM('Corrente', 'Poupança') DEFAULT NULL COMMENT 'Tipo de conta',
+    `banco_pix` VARCHAR(255) DEFAULT NULL COMMENT 'Chave PIX',
+    `contato_emergencia` VARCHAR(20) DEFAULT NULL COMMENT 'Contato de emergência',
+    `nome_contato_emergencia` VARCHAR(255) DEFAULT NULL COMMENT 'Nome do contato de emergência',
+    `observacoes` TEXT DEFAULT NULL COMMENT 'Observações gerais',
     `status` ENUM('Ativo', 'Inativo') NOT NULL DEFAULT 'Ativo',
     `dt_cadastro` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `dt_atualizacao` DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_cpf` (`cpf`),
     KEY `idx_status` (`status`),
-    KEY `idx_nome` (`nome`)
+    KEY `idx_nome` (`nome`),
+    KEY `idx_rg` (`rg`),
+    KEY `idx_dt_nascimento` (`dt_nascimento`),
+    KEY `idx_sexo` (`sexo`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ================================================================
+-- TABELA: professor_modalidades
+-- Relacionamento N:N entre professores e modalidades
+-- ================================================================
+CREATE TABLE IF NOT EXISTS `professor_modalidades` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `professor_id` INT UNSIGNED NOT NULL,
+    `modalidade_id` INT UNSIGNED NOT NULL,
+    `dt_cadastro` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_professor_modalidade` (`professor_id`, `modalidade_id`),
+    KEY `idx_professor` (`professor_id`),
+    KEY `idx_modalidade` (`modalidade_id`),
+    CONSTRAINT `fk_professor_modalidades_professor` FOREIGN KEY (`professor_id`) 
+        REFERENCES `professores` (`id`) 
+        ON DELETE CASCADE 
+        ON UPDATE CASCADE,
+    CONSTRAINT `fk_professor_modalidades_modalidade` FOREIGN KEY (`modalidade_id`) 
+        REFERENCES `modalidades` (`id`) 
+        ON DELETE CASCADE 
+        ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ================================================================

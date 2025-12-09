@@ -53,28 +53,28 @@
                         <div class="dashboard-list-item-title">Cadastrar Novo Aluno</div>
                         <div class="dashboard-list-item-subtitle">Adicione um novo aluno ao sistema</div>
                     </div>
-                    <a href="#" class="dashboard-card-action">Acessar →</a>
+                    <a href="<?= BASE_URL ?>/alunos/create" class="dashboard-card-action">Acessar →</a>
                 </li>
                 <li class="dashboard-list-item">
                     <div class="dashboard-list-item-info">
                         <div class="dashboard-list-item-title">Criar Nova Turma</div>
                         <div class="dashboard-list-item-subtitle">Organize uma nova turma de aulas</div>
                     </div>
-                    <a href="#" class="dashboard-card-action">Acessar →</a>
+                    <a href="<?= BASE_URL ?>/turmas/create" class="dashboard-card-action">Acessar →</a>
                 </li>
                 <li class="dashboard-list-item">
                     <div class="dashboard-list-item-info">
                         <div class="dashboard-list-item-title">Registrar Pagamento</div>
                         <div class="dashboard-list-item-subtitle">Registre um novo pagamento</div>
                     </div>
-                    <a href="#" class="dashboard-card-action">Acessar →</a>
+                    <a href="<?= BASE_URL ?>/financeiro/pagamentos/create" class="dashboard-card-action">Acessar →</a>
                 </li>
                 <li class="dashboard-list-item">
                     <div class="dashboard-list-item-info">
                         <div class="dashboard-list-item-title">Gerar Relatório</div>
                         <div class="dashboard-list-item-subtitle">Visualize relatórios do sistema</div>
                     </div>
-                    <a href="#" class="dashboard-card-action">Acessar →</a>
+                    <a href="<?= BASE_URL ?>/relatorios" class="dashboard-card-action">Acessar →</a>
                 </li>
             </ul>
         </div>
@@ -82,13 +82,22 @@
         <div class="dashboard-card">
             <div class="dashboard-card-header">
                 <h3 class="dashboard-card-title">Resumo Financeiro</h3>
-                <a href="#" class="dashboard-card-action">Ver mais</a>
+                <a href="<?= BASE_URL ?>/financeiro" class="dashboard-card-action">Ver mais</a>
             </div>
             <ul class="dashboard-list">
                 <li class="dashboard-list-item">
                     <div class="dashboard-list-item-info">
                         <div class="dashboard-list-item-title">Receita do Mês</div>
-                        <div class="dashboard-list-item-subtitle"><?= date('F Y') ?></div>
+                        <div class="dashboard-list-item-subtitle">
+                            <?php
+                            $meses = [
+                                1 => 'Janeiro', 2 => 'Fevereiro', 3 => 'Março', 4 => 'Abril',
+                                5 => 'Maio', 6 => 'Junho', 7 => 'Julho', 8 => 'Agosto',
+                                9 => 'Setembro', 10 => 'Outubro', 11 => 'Novembro', 12 => 'Dezembro'
+                            ];
+                            echo $meses[(int)date('n')] . ' ' . date('Y');
+                            ?>
+                        </div>
                     </div>
                     <span class="dashboard-list-item-badge success">
                         R$ <?= number_format($stats['receita_mes'] ?? 0, 2, ',', '.') ?>

@@ -20,7 +20,7 @@ abstract class Model
     /**
      * Obtém conexão PDO (Singleton)
      */
-    protected static function getConnection(): PDO
+    public static function getConnection(): PDO
     {
         if (self::$connection === null) {
             $config = require ROOT_PATH . '/config/database.php';

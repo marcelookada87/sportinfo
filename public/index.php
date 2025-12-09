@@ -41,6 +41,15 @@ $router->get('/alunos/{id}/edit', 'AlunosController', 'edit');
 $router->post('/alunos/{id}', 'AlunosController', 'update');
 $router->post('/alunos/{id}/delete', 'AlunosController', 'delete');
 
+// Rotas de Professores
+$router->get('/professores', 'ProfessoresController', 'index');
+$router->get('/professores/create', 'ProfessoresController', 'create');
+$router->post('/professores', 'ProfessoresController', 'store');
+$router->get('/professores/{id}', 'ProfessoresController', 'show');
+$router->get('/professores/{id}/edit', 'ProfessoresController', 'edit');
+$router->post('/professores/{id}', 'ProfessoresController', 'update');
+$router->post('/professores/{id}/delete', 'ProfessoresController', 'delete');
+
 // Resolve rota
 $router->resolve();
 

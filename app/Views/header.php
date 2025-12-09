@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/dashboard.css">
     <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/sidebar.css">
     <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/alunos.css">
-    <?php if (strpos($_SERVER['REQUEST_URI'] ?? '', '/alunos') !== false): ?>
+    <?php if (strpos($_SERVER['REQUEST_URI'] ?? '', '/alunos') !== false || strpos($_SERVER['REQUEST_URI'] ?? '', '/professores') !== false): ?>
     <link rel="stylesheet" href="<?= ASSETS_URL ?>/datatables/css/dataTables.css">
     <?php endif; ?>
 </head>

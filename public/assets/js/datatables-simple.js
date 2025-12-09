@@ -110,9 +110,11 @@
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
             initDataTable('alunosTable');
+            initDataTable('professoresTable');
         });
     } else {
         initDataTable('alunosTable');
+        initDataTable('professoresTable');
     }
 })();
 

@@ -143,6 +143,10 @@ class PlanosController extends Controller
             $errors[] = 'Valor base deve ser um número maior que zero.';
         }
 
+        if (empty($_POST['quantidade_meses']) || !is_numeric($_POST['quantidade_meses']) || (int)$_POST['quantidade_meses'] < 1) {
+            $errors[] = 'Quantidade de meses deve ser um número maior ou igual a 1.';
+        }
+
         if (!empty($errors)) {
             $_SESSION['errors'] = $errors;
             $this->redirect('/planos/create');
@@ -153,6 +157,7 @@ class PlanosController extends Controller
         $data = [
             'nome' => trim($_POST['nome']),
             'periodicidade' => $_POST['periodicidade'],
+            'quantidade_meses' => (int)$_POST['quantidade_meses'],
             'valor_base' => (float)$_POST['valor_base'],
             'descricao' => !empty($_POST['descricao']) ? trim($_POST['descricao']) : null,
             'ativo' => isset($_POST['ativo']) ? (int)$_POST['ativo'] : 1
@@ -345,6 +350,10 @@ class PlanosController extends Controller
             $errors[] = 'Valor base deve ser um número maior que zero.';
         }
 
+        if (empty($_POST['quantidade_meses']) || !is_numeric($_POST['quantidade_meses']) || (int)$_POST['quantidade_meses'] < 1) {
+            $errors[] = 'Quantidade de meses deve ser um número maior ou igual a 1.';
+        }
+
         if (!empty($errors)) {
             $_SESSION['errors'] = $errors;
             $this->redirect('/planos/' . $id . '/edit');
@@ -355,6 +364,7 @@ class PlanosController extends Controller
         $data = [
             'nome' => trim($_POST['nome']),
             'periodicidade' => $_POST['periodicidade'],
+            'quantidade_meses' => (int)$_POST['quantidade_meses'],
             'valor_base' => (float)$_POST['valor_base'],
             'descricao' => !empty($_POST['descricao']) ? trim($_POST['descricao']) : null,
             'ativo' => isset($_POST['ativo']) ? (int)$_POST['ativo'] : 1

@@ -185,6 +185,7 @@ CREATE TABLE IF NOT EXISTS `planos` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `nome` VARCHAR(255) NOT NULL,
     `periodicidade` ENUM('mensal', 'trimestral', 'anual') NOT NULL DEFAULT 'mensal',
+    `quantidade_meses` INT UNSIGNED NOT NULL DEFAULT 1 COMMENT 'Quantidade de meses de duração do plano',
     `valor_base` DECIMAL(10,2) NOT NULL,
     `descricao` TEXT DEFAULT NULL,
     `ativo` TINYINT(1) NOT NULL DEFAULT 1,
@@ -428,8 +429,8 @@ INSERT INTO `modalidades` (`nome`, `categoria_etaria`, `descricao`, `ativo`) VAL
 ('Lutas', 'Juvenil e Adulto', 'Aulas de artes marciais', 1);
 
 -- Planos de exemplo
-INSERT INTO `planos` (`nome`, `periodicidade`, `valor_base`, `descricao`, `ativo`) VALUES
-('Plano Mensal', 'mensal', 150.00, 'Mensalidade mensal', 1),
-('Plano Trimestral', 'trimestral', 400.00, 'Plano com desconto para 3 meses', 1),
-('Plano Anual', 'anual', 1500.00, 'Plano com maior desconto para 12 meses', 1);
+INSERT INTO `planos` (`nome`, `periodicidade`, `quantidade_meses`, `valor_base`, `descricao`, `ativo`) VALUES
+('Plano Mensal', 'mensal', 1, 150.00, 'Mensalidade mensal', 1),
+('Plano Trimestral', 'trimestral', 3, 400.00, 'Plano com desconto para 3 meses', 1),
+('Plano Anual', 'anual', 12, 1500.00, 'Plano com maior desconto para 12 meses', 1);
 

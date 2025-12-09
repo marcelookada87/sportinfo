@@ -72,6 +72,7 @@ $router->post('/planos/{id}/delete', 'PlanosController', 'delete');
 $router->get('/matriculas', 'MatriculasController', 'index');
 $router->get('/matriculas/create', 'MatriculasController', 'create');
 $router->post('/matriculas', 'MatriculasController', 'store');
+$router->post('/matriculas/multiple', 'MatriculasController', 'storeMultiple');
 $router->get('/matriculas/{id}', 'MatriculasController', 'show');
 $router->get('/matriculas/{id}/edit', 'MatriculasController', 'edit');
 $router->post('/matriculas/{id}', 'MatriculasController', 'update');

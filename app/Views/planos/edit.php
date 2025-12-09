@@ -69,6 +69,23 @@
             </div>
 
             <div class="form-group">
+                <label for="quantidade_meses" class="form-label">
+                    Quantidade de Meses <span class="required">*</span>
+                </label>
+                <input 
+                    type="number" 
+                    id="quantidade_meses" 
+                    name="quantidade_meses" 
+                    class="form-control" 
+                    required
+                    min="1"
+                    value="<?= htmlspecialchars($plano['quantidade_meses'] ?? '1', ENT_QUOTES, 'UTF-8') ?>"
+                    placeholder="1"
+                >
+                <small class="form-text">Duração do plano em meses (será preenchido automaticamente ao selecionar a periodicidade, mas pode ser editado)</small>
+            </div>
+
+            <div class="form-group">
                 <label for="valor_base" class="form-label">
                     Valor Base (R$) <span class="required">*</span>
                 </label>
@@ -121,26 +138,35 @@
 <script>
 (function() {
     const periodicidadeSelect = document.getElementById('periodicidade');
+    const quantidadeMesesInput = document.getElementById('quantidade_meses');
     const valorBaseInput = document.getElementById('valor_base');
     const valorMensalPreview = document.getElementById('valorMensalPreview');
     
-    function calcularValorMensal() {
+    function atualizarQuantidadeMeses() {
         const periodicidade = periodicidadeSelect.value;
-        const valorBase = parseFloat(valorBaseInput.value) || 0;
-        
-        if (valorBase > 0 && periodicidade) {
-            let valorMensal = 0;
+        if (periodicidade) {
+            let meses = 1;
             switch(periodicidade) {
                 case 'mensal':
-                    valorMensal = valorBase;
+                    meses = 1;
                     break;
                 case 'trimestral':
-                    valorMensal = valorBase / 3;
+                    meses = 3;
                     break;
                 case 'anual':
-                    valorMensal = valorBase / 12;
+                    meses = 12;
                     break;
             }
+            quantidadeMesesInput.value = meses;
+        }
+    }
+    
+    function calcularValorMensal() {
+        const valorBase = parseFloat(valorBaseInput.value) || 0;
+        const quantidadeMeses = parseInt(quantidadeMesesInput.value) || 1;
+        
+        if (valorBase > 0 && quantidadeMeses > 0) {
+            const valorMensal = valorBase / quantidadeMeses;
             
             if (valorMensal > 0) {
                 valorMensalPreview.textContent = 'R$ ' + valorMensal.toLocaleString('pt-BR', {
@@ -155,7 +181,11 @@
         }
     }
     
-    periodicidadeSelect.addEventListener('change', calcularValorMensal);
+    periodicidadeSelect.addEventListener('change', function() {
+        atualizarQuantidadeMeses();
+        calcularValorMensal();
+    });
+    quantidadeMesesInput.addEventListener('input', calcularValorMensal);
     valorBaseInput.addEventListener('input', calcularValorMensal);
     
     // Calcula ao carregar

@@ -50,6 +50,15 @@ $router->get('/professores/{id}/edit', 'ProfessoresController', 'edit');
 $router->post('/professores/{id}', 'ProfessoresController', 'update');
 $router->post('/professores/{id}/delete', 'ProfessoresController', 'delete');
 
+// Rotas de Modalidades
+$router->get('/modalidades', 'ModalidadesController', 'index');
+$router->get('/modalidades/create', 'ModalidadesController', 'create');
+$router->post('/modalidades', 'ModalidadesController', 'store');
+$router->get('/modalidades/{id}', 'ModalidadesController', 'show');
+$router->get('/modalidades/{id}/edit', 'ModalidadesController', 'edit');
+$router->post('/modalidades/{id}', 'ModalidadesController', 'update');
+$router->post('/modalidades/{id}/delete', 'ModalidadesController', 'delete');
+
 // Resolve rota
 $router->resolve();
 

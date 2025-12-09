@@ -28,11 +28,35 @@
             const forms = document.querySelectorAll('form[data-validate]');
             
             forms.forEach(form => {
+                // Previne duplo submit
+                let isSubmitting = false;
+                
                 form.addEventListener('submit', function(e) {
+                    // Se já está enviando, previne novo submit
+                    if (isSubmitting) {
+                        e.preventDefault();
+                        return false;
+                    }
+                    
+                    // Valida formulário
                     if (!App.validateForm(this)) {
                         e.preventDefault();
                         return false;
                     }
+                    
+                    // Marca como enviando
+                    isSubmitting = true;
+                    
+                    // Desabilita botão de submit e adiciona indicador visual
+                    App.disableSubmitButton(this);
+                    
+                    // Reabilita após timeout (caso de erro de rede)
+                    setTimeout(() => {
+                        if (isSubmitting) {
+                            isSubmitting = false;
+                            App.enableSubmitButton(this);
+                        }
+                    }, 30000); // 30 segundos timeout
                 });
 
                 // Validação em tempo real
@@ -43,6 +67,64 @@
                     });
                 });
             });
+        },
+
+        /**
+         * Desabilita botão de submit e adiciona indicador visual
+         */
+        disableSubmitButton: function(form) {
+            const submitButton = form.querySelector('button[type="submit"]');
+            if (!submitButton) return;
+            
+            // Salva estado original
+            if (!submitButton.hasAttribute('data-original-text')) {
+                submitButton.setAttribute('data-original-text', submitButton.textContent.trim());
+            }
+            if (!submitButton.hasAttribute('data-original-disabled')) {
+                submitButton.setAttribute('data-original-disabled', submitButton.disabled);
+            }
+            
+            // Desabilita botão
+            submitButton.disabled = true;
+            submitButton.style.opacity = '0.6';
+            submitButton.style.cursor = 'not-allowed';
+            submitButton.setAttribute('aria-busy', 'true');
+            
+            // Determina texto de loading baseado no texto original
+            const originalText = submitButton.getAttribute('data-original-text');
+            let loadingText = 'Processando...';
+            
+            if (originalText.includes('Salvar') || originalText.includes('Atualizar')) {
+                loadingText = 'Salvando...';
+            } else if (originalText.includes('Cadastrar') || originalText.includes('Criar')) {
+                loadingText = 'Cadastrando...';
+            } else if (originalText.includes('Editar')) {
+                loadingText = 'Atualizando...';
+            } else if (originalText.includes('Excluir') || originalText.includes('Deletar')) {
+                loadingText = 'Excluindo...';
+            }
+            
+            submitButton.textContent = loadingText;
+        },
+
+        /**
+         * Reabilita botão de submit
+         */
+        enableSubmitButton: function(form) {
+            const submitButton = form.querySelector('button[type="submit"]');
+            if (!submitButton) return;
+            
+            const originalText = submitButton.getAttribute('data-original-text');
+            const originalDisabled = submitButton.getAttribute('data-original-disabled') === 'true';
+            
+            submitButton.disabled = originalDisabled;
+            submitButton.style.opacity = '1';
+            submitButton.style.cursor = 'pointer';
+            submitButton.removeAttribute('aria-busy');
+            
+            if (originalText) {
+                submitButton.textContent = originalText;
+            }
         },
 
         /**
@@ -430,5 +512,136 @@
 
     // Expõe App globalmente
     window.App = App;
+})();
+
+/**
+ * Proteção global contra duplo submit em TODOS os formulários
+ * Implementação otimizada e moderna
+ */
+(function() {
+    'use strict';
+    
+    // Map para rastrear formulários em processo de submit
+    const submittingForms = new WeakMap();
+    
+    function handleFormSubmit(e) {
+        const form = e.target;
+        
+        // Verifica se já está enviando
+        if (submittingForms.has(form)) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            return false;
+        }
+        
+        // Marca como enviando
+        submittingForms.set(form, true);
+        
+        // Desabilita botão de submit
+        const submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
+        if (submitButton) {
+            const originalText = submitButton.textContent || submitButton.value;
+            const originalDisabled = submitButton.disabled;
+            
+            // Salva estado original
+            submitButton.setAttribute('data-original-text', originalText);
+            submitButton.setAttribute('data-original-disabled', originalDisabled);
+            
+            // Desabilita e adiciona indicador visual
+            submitButton.disabled = true;
+            if (submitButton.style) {
+                submitButton.style.opacity = '0.6';
+                submitButton.style.cursor = 'not-allowed';
+            }
+            submitButton.setAttribute('aria-busy', 'true');
+            
+            // Texto de loading inteligente
+            let loadingText = 'Processando...';
+            const text = originalText.toLowerCase();
+            if (text.includes('salvar') || text.includes('atualizar')) {
+                loadingText = 'Salvando...';
+            } else if (text.includes('cadastrar') || text.includes('criar') || text.includes('novo')) {
+                loadingText = 'Cadastrando...';
+            } else if (text.includes('editar')) {
+                loadingText = 'Atualizando...';
+            } else if (text.includes('excluir') || text.includes('deletar')) {
+                loadingText = 'Excluindo...';
+            } else if (text.includes('entrar') || text.includes('login')) {
+                loadingText = 'Entrando...';
+            }
+            
+            if (submitButton.tagName === 'INPUT') {
+                submitButton.value = loadingText;
+            } else {
+                submitButton.textContent = loadingText;
+            }
+            
+            // Reabilita após timeout (caso de erro)
+            setTimeout(() => {
+                if (submittingForms.has(form)) {
+                    submittingForms.delete(form);
+                    
+                    submitButton.disabled = originalDisabled;
+                    if (submitButton.style) {
+                        submitButton.style.opacity = '1';
+                        submitButton.style.cursor = 'pointer';
+                    }
+                    submitButton.removeAttribute('aria-busy');
+                    
+                    if (submitButton.tagName === 'INPUT') {
+                        submitButton.value = originalText;
+                    } else {
+                        submitButton.textContent = originalText;
+                    }
+                }
+            }, 30000); // 30 segundos
+        }
+        
+        // Remove do map quando a página recarregar (sucesso)
+        // Isso é feito automaticamente pelo navegador
+    }
+    
+    // Adiciona listener quando DOM estiver pronto
+    function initDoubleSubmitProtection() {
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            // Remove listener anterior se existir
+            form.removeEventListener('submit', handleFormSubmit);
+            // Adiciona novo listener
+            form.addEventListener('submit', handleFormSubmit, { passive: false });
+        });
+    }
+    
+    // Inicializa quando DOM estiver pronto
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initDoubleSubmitProtection);
+    } else {
+        initDoubleSubmitProtection();
+    }
+    
+    // Re-inicializa para formulários carregados dinamicamente
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+                if (node.nodeType === 1) { // Element node
+                    if (node.tagName === 'FORM') {
+                        node.addEventListener('submit', handleFormSubmit, { passive: false });
+                    } else {
+                        const forms = node.querySelectorAll && node.querySelectorAll('form');
+                        if (forms) {
+                            forms.forEach(form => {
+                                form.addEventListener('submit', handleFormSubmit, { passive: false });
+                            });
+                        }
+                    }
+                }
+            });
+        });
+    });
+    
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
 })();
 

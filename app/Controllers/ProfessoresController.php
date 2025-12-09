@@ -108,8 +108,16 @@ class ProfessoresController extends Controller
         }
 
         // Valida CSRF
-        if (!$this->validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $csrfToken = $_POST['csrf_token'] ?? '';
+        if (!$this->validateCsrfToken($csrfToken)) {
             $_SESSION['error'] = 'Token de segurança inválido.';
+            $this->redirect('/professores/create');
+            return;
+        }
+
+        // Proteção contra duplo submit
+        if ($this->isDuplicateRequest($csrfToken)) {
+            $_SESSION['error'] = 'Requisição duplicada detectada. Aguarde um momento antes de tentar novamente.';
             $this->redirect('/professores/create');
             return;
         }
@@ -321,8 +329,16 @@ class ProfessoresController extends Controller
         }
 
         // Valida CSRF
-        if (!$this->validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $csrfToken = $_POST['csrf_token'] ?? '';
+        if (!$this->validateCsrfToken($csrfToken)) {
             $_SESSION['error'] = 'Token de segurança inválido.';
+            $this->redirect('/professores/' . $id . '/edit');
+            return;
+        }
+
+        // Proteção contra duplo submit
+        if ($this->isDuplicateRequest($csrfToken)) {
+            $_SESSION['error'] = 'Requisição duplicada detectada. Aguarde um momento antes de tentar novamente.';
             $this->redirect('/professores/' . $id . '/edit');
             return;
         }
@@ -436,8 +452,16 @@ class ProfessoresController extends Controller
         }
 
         // Valida CSRF
-        if (!$this->validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $csrfToken = $_POST['csrf_token'] ?? '';
+        if (!$this->validateCsrfToken($csrfToken)) {
             $_SESSION['error'] = 'Token de segurança inválido.';
+            $this->redirect('/professores');
+            return;
+        }
+
+        // Proteção contra duplo submit
+        if ($this->isDuplicateRequest($csrfToken)) {
+            $_SESSION['error'] = 'Requisição duplicada detectada. Aguarde um momento antes de tentar novamente.';
             $this->redirect('/professores');
             return;
         }

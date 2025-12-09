@@ -162,5 +162,34 @@ abstract class Controller
         return isset($_SESSION[CSRF_TOKEN_NAME]) 
             && hash_equals($_SESSION[CSRF_TOKEN_NAME], $token);
     }
+
+    /**
+     * Verifica se é requisição duplicada (proteção contra duplo submit)
+     */
+    protected function isDuplicateRequest(string $token): bool
+    {
+        $key = 'last_request_' . md5($token . ($_SERVER['REQUEST_URI'] ?? ''));
+        $lastUsed = $_SESSION[$key] ?? 0;
+        $currentTime = time();
+        
+        // Se o mesmo token foi usado nos últimos 3 segundos, é duplicado
+        if ($currentTime - $lastUsed < 3) {
+            return true;
+        }
+        
+        // Salva timestamp da requisição atual
+        $_SESSION[$key] = $currentTime;
+        
+        // Limpa requisições antigas (mais de 1 minuto)
+        foreach ($_SESSION as $sessionKey => $value) {
+            if (strpos($sessionKey, 'last_request_') === 0 && is_numeric($value)) {
+                if ($currentTime - (int)$value > 60) {
+                    unset($_SESSION[$sessionKey]);
+                }
+            }
+        }
+        
+        return false;
+    }
 }
 

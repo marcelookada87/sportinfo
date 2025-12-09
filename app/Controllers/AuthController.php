@@ -41,8 +41,16 @@ class AuthController extends Controller
         $data = $this->getPostData();
         
         // Valida CSRF
-        if (empty($data['csrf_token']) || !$this->validateCsrfToken($data['csrf_token'])) {
+        $csrfToken = $data['csrf_token'] ?? '';
+        if (empty($csrfToken) || !$this->validateCsrfToken($csrfToken)) {
             $_SESSION['login_error'] = 'Token de segurança inválido';
+            $this->redirect('/login');
+            return;
+        }
+
+        // Proteção contra duplo submit
+        if ($this->isDuplicateRequest($csrfToken)) {
+            $_SESSION['login_error'] = 'Requisição duplicada detectada. Aguarde um momento antes de tentar novamente.';
             $this->redirect('/login');
             return;
         }

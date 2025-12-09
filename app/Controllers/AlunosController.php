@@ -108,8 +108,16 @@ class AlunosController extends Controller
         }
 
         // Valida CSRF
-        if (!$this->validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $csrfToken = $_POST['csrf_token'] ?? '';
+        if (!$this->validateCsrfToken($csrfToken)) {
             $_SESSION['error'] = 'Token de segurança inválido.';
+            $this->redirect('/alunos/create');
+            return;
+        }
+
+        // Proteção contra duplo submit
+        if ($this->isDuplicateRequest($csrfToken)) {
+            $_SESSION['error'] = 'Requisição duplicada detectada. Aguarde um momento antes de tentar novamente.';
             $this->redirect('/alunos/create');
             return;
         }
@@ -315,8 +323,16 @@ class AlunosController extends Controller
         }
 
         // Valida CSRF
-        if (!$this->validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $csrfToken = $_POST['csrf_token'] ?? '';
+        if (!$this->validateCsrfToken($csrfToken)) {
             $_SESSION['error'] = 'Token de segurança inválido.';
+            $this->redirect('/alunos/' . $id . '/edit');
+            return;
+        }
+
+        // Proteção contra duplo submit
+        if ($this->isDuplicateRequest($csrfToken)) {
+            $_SESSION['error'] = 'Requisição duplicada detectada. Aguarde um momento antes de tentar novamente.';
             $this->redirect('/alunos/' . $id . '/edit');
             return;
         }
@@ -432,8 +448,16 @@ class AlunosController extends Controller
         }
 
         // Valida CSRF
-        if (!$this->validateCsrfToken($_POST['csrf_token'] ?? '')) {
+        $csrfToken = $_POST['csrf_token'] ?? '';
+        if (!$this->validateCsrfToken($csrfToken)) {
             $_SESSION['error'] = 'Token de segurança inválido.';
+            $this->redirect('/alunos');
+            return;
+        }
+
+        // Proteção contra duplo submit
+        if ($this->isDuplicateRequest($csrfToken)) {
+            $_SESSION['error'] = 'Requisição duplicada detectada. Aguarde um momento antes de tentar novamente.';
             $this->redirect('/alunos');
             return;
         }

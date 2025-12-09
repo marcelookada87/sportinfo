@@ -111,10 +111,12 @@
         document.addEventListener('DOMContentLoaded', function() {
             initDataTable('alunosTable');
             initDataTable('professoresTable');
+            initDataTable('modalidadesTable');
         });
     } else {
         initDataTable('alunosTable');
         initDataTable('professoresTable');
+        initDataTable('modalidadesTable');
     }
 })();
 

@@ -68,6 +68,15 @@ $router->get('/planos/{id}/edit', 'PlanosController', 'edit');
 $router->post('/planos/{id}', 'PlanosController', 'update');
 $router->post('/planos/{id}/delete', 'PlanosController', 'delete');
 
+// Rotas de Matrículas
+$router->get('/matriculas', 'MatriculasController', 'index');
+$router->get('/matriculas/create', 'MatriculasController', 'create');
+$router->post('/matriculas', 'MatriculasController', 'store');
+$router->get('/matriculas/{id}', 'MatriculasController', 'show');
+$router->get('/matriculas/{id}/edit', 'MatriculasController', 'edit');
+$router->post('/matriculas/{id}', 'MatriculasController', 'update');
+$router->post('/matriculas/{id}/delete', 'MatriculasController', 'delete');
+
 // Resolve rota
 $router->resolve();
 

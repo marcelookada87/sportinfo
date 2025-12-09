@@ -97,6 +97,18 @@ class Aluno extends Model
     }
 
     /**
+     * Busca todos os alunos ativos
+     */
+    public function findAllAtivos(): array
+    {
+        $sql = "SELECT * FROM {$this->table} WHERE status = 'Ativo' ORDER BY nome ASC";
+        $stmt = self::getConnection()->prepare($sql);
+        $stmt->execute();
+        
+        return $stmt->fetchAll() ?: [];
+    }
+
+    /**
      * Busca aluno com dados do responsável
      */
     public function findWithResponsavel(int $id): ?array

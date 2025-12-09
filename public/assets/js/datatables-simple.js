@@ -113,12 +113,14 @@
             initDataTable('professoresTable');
             initDataTable('modalidadesTable');
             initDataTable('planosTable');
+            initDataTable('matriculasTable');
         });
     } else {
         initDataTable('alunosTable');
         initDataTable('professoresTable');
         initDataTable('modalidadesTable');
         initDataTable('planosTable');
+        initDataTable('matriculasTable');
     }
 })();
 

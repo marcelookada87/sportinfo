@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/dashboard.css">
     <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/sidebar.css">
     <link rel="stylesheet" href="<?= ASSETS_URL ?>/css/alunos.css">
-    <?php if (strpos($_SERVER['REQUEST_URI'] ?? '', '/alunos') !== false || strpos($_SERVER['REQUEST_URI'] ?? '', '/professores') !== false || strpos($_SERVER['REQUEST_URI'] ?? '', '/modalidades') !== false): ?>
+    <?php if (strpos($_SERVER['REQUEST_URI'] ?? '', '/alunos') !== false || strpos($_SERVER['REQUEST_URI'] ?? '', '/professores') !== false || strpos($_SERVER['REQUEST_URI'] ?? '', '/modalidades') !== false || strpos($_SERVER['REQUEST_URI'] ?? '', '/planos') !== false): ?>
     <link rel="stylesheet" href="<?= ASSETS_URL ?>/datatables/css/dataTables.css">
     <?php endif; ?>
 </head>
@@ -86,6 +86,12 @@
                         <a href="<?= BASE_URL ?>/modalidades" class="sidebar-menu-link <?= isActive('/modalidades', $currentPath) ? 'active' : '' ?>">
                             <span class="sidebar-menu-icon icon-sport"></span>
                             <span class="sidebar-menu-text">Modalidades</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="<?= BASE_URL ?>/planos" class="sidebar-menu-link <?= isActive('/planos', $currentPath) ? 'active' : '' ?>">
+                            <span class="sidebar-menu-icon icon-plan"></span>
+                            <span class="sidebar-menu-text">Planos</span>
                         </a>
                     </li>
                     <li class="sidebar-menu-item">

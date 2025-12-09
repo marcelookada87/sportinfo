@@ -14,7 +14,7 @@
     <!-- JavaScript Local -->
     <script src="<?= ASSETS_URL ?>/js/utils.js"></script>
     <script src="<?= ASSETS_URL ?>/js/main.js"></script>
-    <?php if (strpos($_SERVER['REQUEST_URI'] ?? '', '/alunos') !== false || strpos($_SERVER['REQUEST_URI'] ?? '', '/professores') !== false || strpos($_SERVER['REQUEST_URI'] ?? '', '/modalidades') !== false): ?>
+    <?php if (strpos($_SERVER['REQUEST_URI'] ?? '', '/alunos') !== false || strpos($_SERVER['REQUEST_URI'] ?? '', '/professores') !== false || strpos($_SERVER['REQUEST_URI'] ?? '', '/modalidades') !== false || strpos($_SERVER['REQUEST_URI'] ?? '', '/planos') !== false): ?>
     <script src="<?= ASSETS_URL ?>/js/datatables-simple.js"></script>
     <?php endif; ?>
     <script>

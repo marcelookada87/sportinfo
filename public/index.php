@@ -59,6 +59,15 @@ $router->get('/modalidades/{id}/edit', 'ModalidadesController', 'edit');
 $router->post('/modalidades/{id}', 'ModalidadesController', 'update');
 $router->post('/modalidades/{id}/delete', 'ModalidadesController', 'delete');
 
+// Rotas de Planos
+$router->get('/planos', 'PlanosController', 'index');
+$router->get('/planos/create', 'PlanosController', 'create');
+$router->post('/planos', 'PlanosController', 'store');
+$router->get('/planos/{id}', 'PlanosController', 'show');
+$router->get('/planos/{id}/edit', 'PlanosController', 'edit');
+$router->post('/planos/{id}', 'PlanosController', 'update');
+$router->post('/planos/{id}/delete', 'PlanosController', 'delete');
+
 // Resolve rota
 $router->resolve();
 

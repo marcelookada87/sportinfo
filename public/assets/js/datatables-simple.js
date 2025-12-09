@@ -112,11 +112,13 @@
             initDataTable('alunosTable');
             initDataTable('professoresTable');
             initDataTable('modalidadesTable');
+            initDataTable('planosTable');
         });
     } else {
         initDataTable('alunosTable');
         initDataTable('professoresTable');
         initDataTable('modalidadesTable');
+        initDataTable('planosTable');
     }
 })();
 

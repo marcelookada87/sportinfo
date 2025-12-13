@@ -244,11 +244,29 @@ class MatriculasController extends Controller
         ];
 
         try {
+            $pdo = \App\Core\Model::getConnection();
+            $pdo->beginTransaction();
+
+            // Cria matrícula
             $id = $matriculaModel->create($data);
             
-            $_SESSION['success'] = 'Matrícula cadastrada com sucesso!';
+            // Gera mensalidades automaticamente
+            $mensalidadesGeradas = $matriculaModel->gerarMensalidadesAutomaticas($id);
+            $totalMensalidades = count($mensalidadesGeradas);
+
+            $pdo->commit();
+            
+            $mensagem = 'Matrícula cadastrada com sucesso!';
+            if ($totalMensalidades > 0) {
+                $mensagem .= " {$totalMensalidades} mensalidade(s) gerada(s) automaticamente.";
+            }
+            
+            $_SESSION['success'] = $mensagem;
             $this->redirect('/matriculas/' . $id);
         } catch (\Exception $e) {
+            if (isset($pdo) && $pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             $_SESSION['error'] = 'Erro ao cadastrar matrícula: ' . $e->getMessage();
             $this->redirect('/matriculas/create');
         }
@@ -357,9 +375,13 @@ class MatriculasController extends Controller
         // Cria matrículas para cada turma
         $matriculasCriadas = [];
         $erros = [];
+        $totalMensalidadesGeradas = 0;
 
         foreach ($turmasIds as $turmaId) {
             try {
+                $pdo = \App\Core\Model::getConnection();
+                $pdo->beginTransaction();
+
                 $data = [
                     'aluno_id' => $alunoId,
                     'turma_id' => $turmaId,
@@ -370,8 +392,18 @@ class MatriculasController extends Controller
                 ];
 
                 $id = $matriculaModel->create($data);
+                
+                // Gera mensalidades automaticamente
+                $mensalidadesGeradas = $matriculaModel->gerarMensalidadesAutomaticas($id);
+                $totalMensalidadesGeradas += count($mensalidadesGeradas);
+
+                $pdo->commit();
                 $matriculasCriadas[] = $id;
             } catch (\Exception $e) {
+                if (isset($pdo) && $pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                
                 // Busca nome da turma para o erro
                 $sql = "SELECT t.nome FROM turmas t WHERE t.id = :turma_id";
                 $stmt = \App\Core\Model::getConnection()->prepare($sql);
@@ -387,6 +419,10 @@ class MatriculasController extends Controller
         if (!empty($matriculasCriadas)) {
             $total = count($matriculasCriadas);
             $mensagem = "{$total} matrícula(s) criada(s) com sucesso!";
+            
+            if ($totalMensalidadesGeradas > 0) {
+                $mensagem .= " {$totalMensalidadesGeradas} mensalidade(s) gerada(s) automaticamente.";
+            }
             
             if (!empty($erros)) {
                 $mensagem .= " Alguns erros ocorreram: " . implode('; ', $erros);
@@ -451,6 +487,43 @@ class MatriculasController extends Controller
         $stmt->execute(['matricula_id' => $id]);
         $mensalidades = $stmt->fetchAll() ?: [];
 
+        // Calcula resumo financeiro
+        $mensalidadeModel = new \App\Models\Mensalidade();
+        $pagamentoModel = new \App\Models\Pagamento();
+        $totalPago = 0.0;
+        $totalPendente = 0.0;
+        $totalAtrasado = 0.0;
+        $valorTotalMensalidades = 0.0;
+        $hoje = new \DateTime();
+
+        foreach ($mensalidades as &$mensalidade) {
+            $valorTotal = $mensalidadeModel->calcularValorTotal((int)$mensalidade['id']);
+            $valorTotalMensalidades += $valorTotal;
+            $valorPago = $pagamentoModel->getTotalPago((int)$mensalidade['id']);
+            $totalPago += $valorPago;
+
+            // Verifica se está atrasada
+            $dtVencimento = new \DateTime($mensalidade['dt_vencimento']);
+            $isAtrasada = $mensalidade['status'] !== 'Pago' 
+                && $mensalidade['status'] !== 'Cancelado'
+                && $dtVencimento < $hoje;
+
+            if ($isAtrasada) {
+                $totalAtrasado += ($valorTotal - $valorPago);
+            }
+
+            if ($mensalidade['status'] !== 'Pago' && $mensalidade['status'] !== 'Cancelado') {
+                $totalPendente += ($valorTotal - $valorPago);
+            }
+
+            // Adiciona informações calculadas ao array
+            $mensalidade['valor_total'] = $valorTotal;
+            $mensalidade['valor_pago'] = $valorPago;
+            $mensalidade['valor_restante'] = $valorTotal - $valorPago;
+            $mensalidade['is_atrasada'] = $isAtrasada;
+        }
+        unset($mensalidade);
+
         // Busca presenças recentes
         $sql = "SELECT * FROM presencas WHERE matricula_id = :matricula_id ORDER BY data DESC LIMIT 10";
         $stmt = \App\Core\Model::getConnection()->prepare($sql);
@@ -463,7 +536,11 @@ class MatriculasController extends Controller
             'totalMensalidades' => $totalMensalidades,
             'totalMensalidadesAbertas' => $totalMensalidadesAbertas,
             'mensalidades' => $mensalidades,
-            'presencas' => $presencas
+            'presencas' => $presencas,
+            'totalPago' => $totalPago,
+            'totalPendente' => $totalPendente,
+            'totalAtrasado' => $totalAtrasado,
+            'valorTotalMensalidades' => $valorTotalMensalidades
         ]);
         
         echo $this->view->renderWithLayout('layout', [

@@ -227,10 +227,60 @@
         </div>
     </div>
 
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Resumo Financeiro</h3>
+        </div>
+        <div class="card-body">
+            <dl class="details-list">
+                <div class="details-item">
+                    <dt>Valor Total das Mensalidades</dt>
+                    <dd>
+                        <strong style="font-size: 1.2rem; color: var(--text-color);">
+                            R$ <?= number_format($valorTotalMensalidades ?? 0, 2, ',', '.') ?>
+                        </strong>
+                    </dd>
+                </div>
+                
+                <div class="details-item">
+                    <dt>Total Pago</dt>
+                    <dd>
+                        <strong style="font-size: 1.2rem; color: var(--success-color, #28a745);">
+                            R$ <?= number_format($totalPago ?? 0, 2, ',', '.') ?>
+                        </strong>
+                    </dd>
+                </div>
+                
+                <div class="details-item">
+                    <dt>Total Pendente</dt>
+                    <dd>
+                        <strong style="font-size: 1.2rem; color: var(--warning-color, #ffc107);">
+                            R$ <?= number_format($totalPendente ?? 0, 2, ',', '.') ?>
+                        </strong>
+                    </dd>
+                </div>
+                
+                <?php if (($totalAtrasado ?? 0) > 0): ?>
+                <div class="details-item">
+                    <dt>Total em Atraso</dt>
+                    <dd>
+                        <strong style="font-size: 1.2rem; color: var(--error-color, #dc3545);">
+                            R$ <?= number_format($totalAtrasado, 2, ',', '.') ?>
+                        </strong>
+                    </dd>
+                </div>
+                <?php endif; ?>
+            </dl>
+        </div>
+    </div>
+
     <?php if (!empty($mensalidades)): ?>
     <div class="card" style="grid-column: 1 / -1;">
         <div class="card-header">
             <h3 class="card-title">Mensalidades</h3>
+            <div class="card-header-actions">
+                <a href="<?= BASE_URL ?>/financeiro/create?matricula_id=<?= $matricula['id'] ?>" class="btn btn-sm btn-primary">Nova Mensalidade</a>
+            </div>
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -238,10 +288,9 @@
                     <thead>
                         <tr>
                             <th>Competência</th>
-                            <th>Valor</th>
-                            <th>Desconto</th>
-                            <th>Multa</th>
-                            <th>Juros</th>
+                            <th>Valor Total</th>
+                            <th>Valor Pago</th>
+                            <th>Restante</th>
                             <th>Vencimento</th>
                             <th>Status</th>
                             <th>Ações</th>
@@ -249,13 +298,64 @@
                     </thead>
                     <tbody>
                         <?php foreach ($mensalidades as $mensalidade): ?>
-                            <tr>
-                                <td><?= htmlspecialchars($mensalidade['competencia'], ENT_QUOTES, 'UTF-8') ?></td>
-                                <td>R$ <?= number_format((float)$mensalidade['valor'], 2, ',', '.') ?></td>
-                                <td>R$ <?= number_format((float)$mensalidade['desconto'], 2, ',', '.') ?></td>
-                                <td>R$ <?= number_format((float)$mensalidade['multa'], 2, ',', '.') ?></td>
-                                <td>R$ <?= number_format((float)$mensalidade['juros'], 2, ',', '.') ?></td>
-                                <td><?= date('d/m/Y', strtotime($mensalidade['dt_vencimento'])) ?></td>
+                            <?php
+                            $valorTotal = $mensalidade['valor_total'] ?? (float)$mensalidade['valor'] + (float)$mensalidade['multa'] + (float)$mensalidade['juros'] - (float)$mensalidade['desconto'];
+                            $valorPago = $mensalidade['valor_pago'] ?? 0.0;
+                            $valorRestante = $valorTotal - $valorPago;
+                            $isAtrasada = $mensalidade['is_atrasada'] ?? false;
+                            $rowClass = $isAtrasada ? 'table-danger' : ($mensalidade['status'] === 'Pago' ? 'table-success' : '');
+                            ?>
+                            <tr class="<?= $rowClass ?>">
+                                <td><strong><?= htmlspecialchars($mensalidade['competencia'], ENT_QUOTES, 'UTF-8') ?></strong></td>
+                                <td>
+                                    <strong>R$ <?= number_format($valorTotal, 2, ',', '.') ?></strong>
+                                    <?php if ((float)$mensalidade['desconto'] > 0 || (float)$mensalidade['multa'] > 0 || (float)$mensalidade['juros'] > 0): ?>
+                                        <br><small class="text-muted" style="font-size: 0.85em;">
+                                            Base: R$ <?= number_format((float)$mensalidade['valor'], 2, ',', '.') ?>
+                                            <?php if ((float)$mensalidade['desconto'] > 0): ?>
+                                                | Desc: R$ <?= number_format((float)$mensalidade['desconto'], 2, ',', '.') ?>
+                                            <?php endif; ?>
+                                            <?php if ((float)$mensalidade['multa'] > 0): ?>
+                                                | Multa: R$ <?= number_format((float)$mensalidade['multa'], 2, ',', '.') ?>
+                                            <?php endif; ?>
+                                            <?php if ((float)$mensalidade['juros'] > 0): ?>
+                                                | Juros: R$ <?= number_format((float)$mensalidade['juros'], 2, ',', '.') ?>
+                                            <?php endif; ?>
+                                        </small>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <span style="color: var(--success-color, #28a745); font-weight: 500;">
+                                        R$ <?= number_format($valorPago, 2, ',', '.') ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <?php if ($valorRestante > 0): ?>
+                                        <span style="color: var(--warning-color, #ffc107); font-weight: 500;">
+                                            R$ <?= number_format($valorRestante, 2, ',', '.') ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <span style="color: var(--text-secondary);">R$ 0,00</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php
+                                    $dtVencimento = new \DateTime($mensalidade['dt_vencimento']);
+                                    $hoje = new \DateTime();
+                                    $vencimentoClass = '';
+                                    if ($isAtrasada) {
+                                        $vencimentoClass = 'text-danger';
+                                    } elseif ($dtVencimento->format('Y-m-d') === $hoje->format('Y-m-d')) {
+                                        $vencimentoClass = 'text-warning';
+                                    }
+                                    ?>
+                                    <span class="<?= $vencimentoClass ?>">
+                                        <?= date('d/m/Y', strtotime($mensalidade['dt_vencimento'])) ?>
+                                        <?php if ($isAtrasada): ?>
+                                            <br><small class="badge badge-error">Atrasada</small>
+                                        <?php endif; ?>
+                                    </span>
+                                </td>
                                 <td>
                                     <?php
                                     $statusColors = [
@@ -269,7 +369,12 @@
                                     <span class="badge <?= $statusColor ?>"><?= htmlspecialchars($mensalidade['status'], ENT_QUOTES, 'UTF-8') ?></span>
                                 </td>
                                 <td>
-                                    <a href="<?= BASE_URL ?>/financeiro/mensalidades/<?= $mensalidade['id'] ?>" class="btn btn-sm btn-secondary">Ver</a>
+                                    <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
+                                        <a href="<?= BASE_URL ?>/financeiro/<?= $mensalidade['id'] ?>" class="btn btn-sm btn-secondary" title="Ver detalhes">Ver</a>
+                                        <?php if ($mensalidade['status'] !== 'Pago' && $mensalidade['status'] !== 'Cancelado'): ?>
+                                            <a href="<?= BASE_URL ?>/financeiro/pagamento/<?= $mensalidade['id'] ?>/create" class="btn btn-sm btn-primary" title="Registrar pagamento">Pagar</a>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

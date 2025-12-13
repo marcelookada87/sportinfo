@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Core\Model;
+use App\Models\Plano;
+use App\Models\Mensalidade;
 
 /**
  * Model de Matrícula
@@ -286,6 +288,149 @@ class Matricula extends Model
         $stmt->execute(['turma_id' => $turmaId]);
         
         return $stmt->fetchAll() ?: [];
+    }
+
+    /**
+     * Gera mensalidades automaticamente para uma matrícula
+     * Baseado na periodicidade do plano e período da matrícula
+     * 
+     * @param int $matriculaId ID da matrícula
+     * @return array Array com IDs das mensalidades geradas
+     * @throws \Exception Em caso de erro
+     */
+    public function gerarMensalidadesAutomaticas(int $matriculaId): array
+    {
+        // Busca dados da matrícula e plano
+        $matricula = $this->find($matriculaId);
+        if (!$matricula) {
+            throw new \Exception("Matrícula não encontrada.");
+        }
+
+        $planoModel = new Plano();
+        $plano = $planoModel->find((int)$matricula['plano_id']);
+        if (!$plano) {
+            throw new \Exception("Plano não encontrado.");
+        }
+
+        // Se não tem data de término, usa quantidade_meses do plano
+        $dtInicio = new \DateTime($matricula['dt_inicio']);
+        $dtFim = $matricula['dt_fim'] ? new \DateTime($matricula['dt_fim']) : null;
+        
+        if (!$dtFim && !empty($plano['quantidade_meses'])) {
+            $dtFim = clone $dtInicio;
+            $dtFim->modify('+' . (int)$plano['quantidade_meses'] . ' months');
+            $dtFim->modify('-1 day'); // Último dia do período
+        }
+
+        if (!$dtFim) {
+            throw new \Exception("Não foi possível determinar período da matrícula.");
+        }
+
+        // Calcula mensalidades baseado na periodicidade
+        $mensalidades = $this->calcularMensalidades($dtInicio, $dtFim, $plano, $matriculaId);
+
+        // Verifica se já existem mensalidades para evitar duplicação
+        $mensalidadeModel = new Mensalidade();
+        $mensalidadesExistentes = $mensalidadeModel->findByMatricula($matriculaId);
+        $competenciasExistentes = array_column($mensalidadesExistentes, 'competencia');
+
+        $mensalidadesGeradas = [];
+        
+        foreach ($mensalidades as $mensalidade) {
+            // Verifica se já existe mensalidade para esta competência
+            if (in_array($mensalidade['competencia'], $competenciasExistentes)) {
+                continue; // Pula se já existe
+            }
+
+            try {
+                $id = $mensalidadeModel->create($mensalidade);
+                $mensalidadesGeradas[] = $id;
+            } catch (\PDOException $e) {
+                error_log("Erro ao criar mensalidade: " . $e->getMessage());
+                // Continua criando as outras mensalidades
+            }
+        }
+
+        return $mensalidadesGeradas;
+    }
+
+    /**
+     * Calcula mensalidades baseado na periodicidade do plano
+     * 
+     * @param \DateTime $dtInicio Data de início
+     * @param \DateTime $dtFim Data de término
+     * @param array $plano Dados do plano
+     * @param int $matriculaId ID da matrícula
+     * @return array Array de arrays com dados das mensalidades
+     */
+    private function calcularMensalidades(\DateTime $dtInicio, \DateTime $dtFim, array $plano, int $matriculaId): array
+    {
+        $mensalidades = [];
+        $periodicidade = $plano['periodicidade'];
+        $valorBase = (float)$plano['valor_base'];
+        
+        // Obtém o dia da dt_inicio para usar como dia de vencimento
+        $diaVencimento = (int)$dtInicio->format('d');
+        
+        // Data atual para cálculo
+        $dataAtual = clone $dtInicio;
+        
+        // Define intervalo baseado na periodicidade
+        switch ($periodicidade) {
+            case 'mensal':
+                $intervaloMeses = 1;
+                $valorMensalidade = $valorBase;
+                break;
+                
+            case 'trimestral':
+                $intervaloMeses = 3;
+                $valorMensalidade = $valorBase; // Valor total do trimestre
+                break;
+                
+            case 'anual':
+                $intervaloMeses = 12;
+                $valorMensalidade = $valorBase; // Valor total do ano
+                break;
+                
+            default:
+                $intervaloMeses = 1;
+                $valorMensalidade = $valorBase;
+        }
+
+        // Gera mensalidades até a data de término
+        while ($dataAtual <= $dtFim) {
+            // Cria competência (YYYY-MM)
+            $competencia = $dataAtual->format('Y-m');
+            
+            // Calcula data de vencimento (mesmo dia do mês da dt_inicio)
+            $dtVencimento = clone $dataAtual;
+            
+            // Ajusta para o dia correto do mês (resolve problema de meses com menos dias)
+            // Se dt_inicio foi dia 31, mas fevereiro tem 28 dias, usa dia 28
+            $ultimoDiaMes = (int)$dtVencimento->format('t');
+            $diaFinal = min($diaVencimento, $ultimoDiaMes);
+            $dtVencimento->setDate(
+                (int)$dtVencimento->format('Y'),
+                (int)$dtVencimento->format('m'),
+                $diaFinal
+            );
+
+            $mensalidades[] = [
+                'matricula_id' => $matriculaId,
+                'competencia' => $competencia,
+                'valor' => $valorMensalidade,
+                'desconto' => 0.00,
+                'multa' => 0.00,
+                'juros' => 0.00,
+                'dt_vencimento' => $dtVencimento->format('Y-m-d'),
+                'status' => 'Aberto'
+            ];
+
+            // Avança para próxima mensalidade
+            $dataAtual->modify('+' . $intervaloMeses . ' months');
+        }
+
+        return $mensalidades;
     }
 }
 

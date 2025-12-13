@@ -88,6 +88,19 @@ $router->get('/turmas/{id}/edit', 'TurmasController', 'edit');
 $router->post('/turmas/{id}', 'TurmasController', 'update');
 $router->post('/turmas/{id}/delete', 'TurmasController', 'delete');
 
+// Rotas de Financeiro
+$router->get('/financeiro', 'FinanceiroController', 'index');
+$router->get('/financeiro/create', 'FinanceiroController', 'create');
+$router->post('/financeiro', 'FinanceiroController', 'store');
+$router->get('/financeiro/{id}', 'FinanceiroController', 'show');
+$router->get('/financeiro/{id}/edit', 'FinanceiroController', 'edit');
+$router->post('/financeiro/{id}', 'FinanceiroController', 'update');
+$router->post('/financeiro/{id}/delete', 'FinanceiroController', 'delete');
+$router->get('/financeiro/pagamentos', 'FinanceiroController', 'pagamentos');
+$router->get('/financeiro/pagamento/{mensalidade_id}/create', 'FinanceiroController', 'pagamentoCreate');
+$router->post('/financeiro/pagamento', 'FinanceiroController', 'pagamentoStore');
+$router->get('/financeiro/pagamento/{id}', 'FinanceiroController', 'pagamentoShow');
+
 // Resolve rota
 $router->resolve();
 

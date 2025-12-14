@@ -332,20 +332,57 @@ class Matricula extends Model
 
         // Verifica se já existem mensalidades para evitar duplicação
         $mensalidadeModel = new Mensalidade();
-        $mensalidadesExistentes = $mensalidadeModel->findByMatricula($matriculaId);
-        $competenciasExistentes = array_column($mensalidadesExistentes, 'competencia');
+        
+        // Busca mensalidades existentes do ALUNO para o mesmo PLANO e competência
+        // Isso evita criar múltiplas mensalidades quando o aluno está em várias turmas
+        $alunoId = (int)$matricula['aluno_id'];
+        $planoId = (int)$matricula['plano_id'];
+        
+        // Busca a primeira matrícula do aluno para o mesmo plano (para usar como referência)
+        $sql = "SELECT id FROM {$this->table} 
+                WHERE aluno_id = :aluno_id AND plano_id = :plano_id 
+                ORDER BY id ASC LIMIT 1";
+        $stmt = self::getConnection()->prepare($sql);
+        $stmt->execute([
+            'aluno_id' => $alunoId,
+            'plano_id' => $planoId
+        ]);
+        $primeiraMatricula = $stmt->fetch();
+        $matriculaReferenciaId = $primeiraMatricula ? (int)$primeiraMatricula['id'] : $matriculaId;
+        
+        // Busca competências já existentes para este aluno/plano
+        $sql = "SELECT DISTINCT m.competencia 
+                FROM mensalidades m
+                INNER JOIN matriculas mat ON m.matricula_id = mat.id
+                WHERE mat.aluno_id = :aluno_id 
+                AND mat.plano_id = :plano_id
+                AND m.competencia IS NOT NULL";
+        $stmt = self::getConnection()->prepare($sql);
+        $stmt->execute([
+            'aluno_id' => $alunoId,
+            'plano_id' => $planoId
+        ]);
+        $competenciasExistentes = array_column($stmt->fetchAll() ?: [], 'competencia');
 
         $mensalidadesGeradas = [];
         
         foreach ($mensalidades as $mensalidade) {
-            // Verifica se já existe mensalidade para esta competência
+            // Verifica se o aluno já tem mensalidade para esta competência e plano
+            // Se sim, não cria nova mensalidade (aluno paga apenas uma vez pelo plano)
             if (in_array($mensalidade['competencia'], $competenciasExistentes)) {
-                continue; // Pula se já existe
+                continue; // Pula se já existe mensalidade consolidada para aluno/plano/competência
             }
 
             try {
-                $id = $mensalidadeModel->create($mensalidade);
+                // Usa a primeira matrícula como referência para criar a mensalidade consolidada
+                $mensalidadeData = $mensalidade;
+                $mensalidadeData['matricula_id'] = $matriculaReferenciaId;
+                
+                $id = $mensalidadeModel->create($mensalidadeData);
                 $mensalidadesGeradas[] = $id;
+                
+                // Adiciona a competência criada à lista para evitar duplicação nas próximas iterações
+                $competenciasExistentes[] = $mensalidade['competencia'];
             } catch (\PDOException $e) {
                 error_log("Erro ao criar mensalidade: " . $e->getMessage());
                 // Continua criando as outras mensalidades

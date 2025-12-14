@@ -178,7 +178,19 @@
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <span class="badge badge-info"><?= htmlspecialchars($pagamento['competencia'] ?? '', ENT_QUOTES, 'UTF-8') ?></span>
+                                    <?php
+                                    // Converte competência de YYYY-MM para MM/YYYY
+                                    $competenciaFormatada = '';
+                                    if (!empty($pagamento['competencia'])) {
+                                        $parts = explode('-', $pagamento['competencia']);
+                                        if (count($parts) === 2) {
+                                            $competenciaFormatada = $parts[1] . '/' . $parts[0];
+                                        } else {
+                                            $competenciaFormatada = $pagamento['competencia'];
+                                        }
+                                    }
+                                    ?>
+                                    <span class="badge badge-info"><?= htmlspecialchars($competenciaFormatada, ENT_QUOTES, 'UTF-8') ?></span>
                                 </td>
                                 <td>
                                     <span class="badge badge-info"><?= htmlspecialchars($pagamento['forma'], ENT_QUOTES, 'UTF-8') ?></span>

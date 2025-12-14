@@ -29,11 +29,16 @@ class Mensalidade extends Model
                     a.nome as aluno_nome,
                     a.cpf as aluno_cpf,
                     pl.nome as plano_nome,
-                    pl.valor_base as plano_valor_base
+                    pl.valor_base as plano_valor_base,
+                    t.nome as turma_nome,
+                    t.id as turma_id,
+                    md.nome as modalidade_nome
                 FROM {$this->table} m
                 INNER JOIN matriculas mat ON m.matricula_id = mat.id
                 INNER JOIN alunos a ON mat.aluno_id = a.id
                 INNER JOIN planos pl ON mat.plano_id = pl.id
+                INNER JOIN turmas t ON mat.turma_id = t.id
+                INNER JOIN modalidades md ON t.modalidade_id = md.id
                 WHERE 1=1";
         
         $params = [];

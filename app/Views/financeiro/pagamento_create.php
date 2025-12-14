@@ -36,7 +36,21 @@
             </div>
             <div>
                 <small style="color: var(--text-secondary);">Competência</small>
-                <div><span class="badge badge-info"><?= htmlspecialchars($mensalidade['competencia'] ?? '', ENT_QUOTES, 'UTF-8') ?></span></div>
+                <div>
+                    <?php
+                    // Converte competência de YYYY-MM para MM/YYYY
+                    $competenciaFormatada = '';
+                    if (!empty($mensalidade['competencia'])) {
+                        $parts = explode('-', $mensalidade['competencia']);
+                        if (count($parts) === 2) {
+                            $competenciaFormatada = $parts[1] . '/' . $parts[0];
+                        } else {
+                            $competenciaFormatada = $mensalidade['competencia'];
+                        }
+                    }
+                    ?>
+                    <span class="badge badge-info"><?= htmlspecialchars($competenciaFormatada, ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
             </div>
             <div>
                 <small style="color: var(--text-secondary);">Valor Total</small>

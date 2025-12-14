@@ -61,6 +61,92 @@ class FinanceiroController extends Controller
         }
         unset($mensalidade);
 
+        // Agrupa mensalidades por aluno e competência (consolidação)
+        // IMPORTANTE: O aluno paga apenas UMA vez pelo plano, independente de quantas turmas
+        // Por isso, não somamos os valores, pegamos apenas o valor do plano
+        $mensalidadesAgrupadas = [];
+        foreach ($mensalidades as $mensalidade) {
+            $alunoId = isset($mensalidade['aluno_id']) ? (int)$mensalidade['aluno_id'] : 0;
+            $competencia = $mensalidade['competencia'] ?? '';
+            
+            if ($alunoId > 0 && !empty($competencia)) {
+                $chave = $alunoId . '_' . $competencia;
+                
+                if (!isset($mensalidadesAgrupadas[$chave])) {
+                    // Cria grupo consolidado
+                    // Usa o valor do plano (não soma), pois o aluno paga apenas uma vez
+                    $mensalidadesAgrupadas[$chave] = [
+                        'aluno_id' => $alunoId,
+                        'aluno_nome' => $mensalidade['aluno_nome'] ?? '',
+                        'aluno_cpf' => $mensalidade['aluno_cpf'] ?? '',
+                        'competencia' => $competencia,
+                        'valor' => (float)($mensalidade['valor'] ?? 0), // Valor do plano (não soma)
+                        'desconto' => (float)($mensalidade['desconto'] ?? 0),
+                        'multa' => (float)($mensalidade['multa'] ?? 0),
+                        'juros' => (float)($mensalidade['juros'] ?? 0),
+                        'valor_total' => (float)($mensalidade['valor_total'] ?? 0), // Valor do plano
+                        'dt_vencimento' => $mensalidade['dt_vencimento'] ?? '',
+                        'status' => 'Aberto',
+                        'is_atrasada' => false,
+                        'mensalidades' => [],
+                        'primeira_mensalidade_id' => (int)$mensalidade['id']
+                    ];
+                }
+                
+                // NÃO soma valores - o aluno paga apenas o valor do plano uma vez
+                // Mantém o primeiro valor encontrado (que é o valor do plano)
+                
+                // Usa a data de vencimento mais próxima (mais antiga) ou a primeira
+                if (!empty($mensalidade['dt_vencimento'])) {
+                    if (empty($mensalidadesAgrupadas[$chave]['dt_vencimento']) || 
+                        $mensalidade['dt_vencimento'] < $mensalidadesAgrupadas[$chave]['dt_vencimento']) {
+                        $mensalidadesAgrupadas[$chave]['dt_vencimento'] = $mensalidade['dt_vencimento'];
+                    }
+                }
+                
+                // Verifica se está atrasada
+                if ($mensalidade['is_atrasada'] ?? false) {
+                    $mensalidadesAgrupadas[$chave]['is_atrasada'] = true;
+                }
+                
+                // Adiciona mensalidade individual ao grupo
+                $mensalidadesAgrupadas[$chave]['mensalidades'][] = $mensalidade;
+            }
+        }
+        
+        // Calcula status consolidado após agrupar todas as mensalidades
+        foreach ($mensalidadesAgrupadas as $chave => &$grupo) {
+            $totalPago = 0;
+            $totalCancelado = 0;
+            $totalAtrasado = 0;
+            
+            foreach ($grupo['mensalidades'] as $msg) {
+                $status = $msg['status'] ?? 'Aberto';
+                if ($status === 'Pago') {
+                    $totalPago++;
+                } elseif ($status === 'Cancelado') {
+                    $totalCancelado++;
+                } elseif ($status === 'Atrasado' || ($msg['is_atrasada'] ?? false)) {
+                    $totalAtrasado++;
+                }
+            }
+            
+            $totalMensalidades = count($grupo['mensalidades']);
+            
+            // Define status consolidado
+            if ($totalCancelado === $totalMensalidades) {
+                $grupo['status'] = 'Cancelado';
+            } elseif ($totalPago === $totalMensalidades) {
+                $grupo['status'] = 'Pago';
+            } elseif ($totalPago > 0) {
+                $grupo['status'] = 'Parcial';
+            } elseif ($totalAtrasado > 0 || $grupo['is_atrasada']) {
+                $grupo['status'] = 'Atrasado';
+            } else {
+                $grupo['status'] = 'Aberto';
+            }
+        }
+
         // Busca estatísticas
         $estatisticas = $mensalidadeModel->getEstatisticas($filters);
 
@@ -71,6 +157,7 @@ class FinanceiroController extends Controller
         $content = $this->view->render('financeiro/list', [
             'usuario' => $usuario,
             'mensalidades' => $mensalidades,
+            'mensalidadesAgrupadas' => $mensalidadesAgrupadas,
             'filters' => $filters,
             'total' => $total,
             'currentPage' => (int)($_GET['page'] ?? 0),

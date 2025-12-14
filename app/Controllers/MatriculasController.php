@@ -392,16 +392,15 @@ class MatriculasController extends Controller
             }
         }
 
-        // Cria matrículas para cada turma
+        // Cria todas as matrículas primeiro
         $matriculasCriadas = [];
         $erros = [];
-        $totalMensalidadesGeradas = 0;
-
-        foreach ($turmasIds as $turmaId) {
-            try {
-                $pdo = \App\Core\Model::getConnection();
-                $pdo->beginTransaction();
-
+        $pdo = \App\Core\Model::getConnection();
+        
+        try {
+            $pdo->beginTransaction();
+            
+            foreach ($turmasIds as $turmaId) {
                 $data = [
                     'aluno_id' => $alunoId,
                     'turma_id' => $turmaId,
@@ -412,27 +411,28 @@ class MatriculasController extends Controller
                 ];
 
                 $id = $matriculaModel->create($data);
-                
-                // Gera mensalidades automaticamente
-                $mensalidadesGeradas = $matriculaModel->gerarMensalidadesAutomaticas($id);
-                $totalMensalidadesGeradas += count($mensalidadesGeradas);
-
-                $pdo->commit();
                 $matriculasCriadas[] = $id;
-            } catch (\Exception $e) {
-                if (isset($pdo) && $pdo->inTransaction()) {
-                    $pdo->rollBack();
-                }
-                
-                // Busca nome da turma para o erro
-                $sql = "SELECT t.nome FROM turmas t WHERE t.id = :turma_id";
-                $stmt = \App\Core\Model::getConnection()->prepare($sql);
-                $stmt->execute(['turma_id' => $turmaId]);
-                $turma = $stmt->fetch();
-                $turmaNome = $turma ? $turma['nome'] : "ID {$turmaId}";
-                
-                $erros[] = "Turma '{$turmaNome}': " . $e->getMessage();
             }
+            
+            $pdo->commit();
+            
+            // Gera mensalidades apenas UMA vez usando a primeira matrícula
+            // Isso garante que será criada apenas uma mensalidade consolidada por competência
+            if (!empty($matriculasCriadas)) {
+                $primeiraMatriculaId = $matriculasCriadas[0];
+                $mensalidadesGeradas = $matriculaModel->gerarMensalidadesAutomaticas($primeiraMatriculaId);
+                $totalMensalidadesGeradas = count($mensalidadesGeradas);
+            } else {
+                $totalMensalidadesGeradas = 0;
+            }
+        } catch (\Exception $e) {
+            if (isset($pdo) && $pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            
+            $_SESSION['error'] = 'Erro ao cadastrar matrículas: ' . $e->getMessage();
+            $this->redirect('/matriculas/create');
+            return;
         }
 
         // Retorna resultado
@@ -441,15 +441,10 @@ class MatriculasController extends Controller
             $mensagem = "{$total} matrícula(s) criada(s) com sucesso!";
             
             if ($totalMensalidadesGeradas > 0) {
-                $mensagem .= " {$totalMensalidadesGeradas} mensalidade(s) gerada(s) automaticamente.";
+                $mensagem .= " {$totalMensalidadesGeradas} mensalidade(s) gerada(s) automaticamente (consolidadas).";
             }
             
-            if (!empty($erros)) {
-                $mensagem .= " Alguns erros ocorreram: " . implode('; ', $erros);
-                $_SESSION['error'] = $mensagem;
-            } else {
-                $_SESSION['success'] = $mensagem;
-            }
+            $_SESSION['success'] = $mensagem;
             
             // Redireciona para a primeira matrícula criada ou lista
             if (count($matriculasCriadas) === 1) {
@@ -458,7 +453,7 @@ class MatriculasController extends Controller
                 $this->redirect('/matriculas?aluno_id=' . $alunoId);
             }
         } else {
-            $_SESSION['error'] = 'Nenhuma matrícula foi criada. Erros: ' . implode('; ', $erros);
+            $_SESSION['error'] = 'Nenhuma matrícula foi criada.';
             $this->redirect('/matriculas/create');
         }
     }

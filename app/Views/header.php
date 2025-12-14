@@ -94,6 +94,9 @@
                             <span class="sidebar-menu-text">Planos</span>
                         </a>
                     </li>
+                    <li class="sidebar-menu-divider">
+                        <hr style="margin: 0.75rem 1rem; border: none; border-top: 1px solid rgba(255, 255, 255, 0.2);">
+                    </li>
                     <li class="sidebar-menu-item">
                         <a href="<?= BASE_URL ?>/matriculas" class="sidebar-menu-link <?= isActive('/matriculas', $currentPath) ? 'active' : '' ?>">
                             <span class="sidebar-menu-icon icon-enrollment"></span>

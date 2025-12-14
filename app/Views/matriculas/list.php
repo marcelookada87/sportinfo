@@ -141,31 +141,31 @@
                                             <div class="matricula-item-info">
                                                 <div class="matricula-item-turma">
                                                     <strong><?= htmlspecialchars($matricula['turma_nome'], ENT_QUOTES, 'UTF-8') ?></strong>
-                                                    <?php if (!empty($matricula['professor_nome'])): ?>
+                                    <?php if (!empty($matricula['professor_nome'])): ?>
                                                         <small style="color: var(--text-secondary); margin-left: 0.5rem;">Prof: <?= htmlspecialchars($matricula['professor_nome'], ENT_QUOTES, 'UTF-8') ?></small>
-                                                    <?php endif; ?>
+                                    <?php endif; ?>
                                                 </div>
                                                 <div class="matricula-item-badges">
-                                                    <span class="badge badge-secondary"><?= htmlspecialchars($matricula['modalidade_nome'], ENT_QUOTES, 'UTF-8') ?></span>
-                                                    <?php
-                                                    $statusColors = [
-                                                        'Ativa' => 'badge-success',
-                                                        'Suspensa' => 'badge-warning',
-                                                        'Cancelada' => 'badge-error',
-                                                        'Finalizada' => 'badge-secondary'
-                                                    ];
-                                                    $statusColor = $statusColors[$matricula['status']] ?? 'badge-secondary';
-                                                    ?>
-                                                    <span class="badge <?= $statusColor ?>"><?= htmlspecialchars($matricula['status'], ENT_QUOTES, 'UTF-8') ?></span>
+                                    <span class="badge badge-secondary"><?= htmlspecialchars($matricula['modalidade_nome'], ENT_QUOTES, 'UTF-8') ?></span>
+                                    <?php
+                                    $statusColors = [
+                                        'Ativa' => 'badge-success',
+                                        'Suspensa' => 'badge-warning',
+                                        'Cancelada' => 'badge-error',
+                                        'Finalizada' => 'badge-secondary'
+                                    ];
+                                    $statusColor = $statusColors[$matricula['status']] ?? 'badge-secondary';
+                                    ?>
+                                    <span class="badge <?= $statusColor ?>"><?= htmlspecialchars($matricula['status'], ENT_QUOTES, 'UTF-8') ?></span>
                                                 </div>
                                             </div>
                                             <div class="matricula-item-actions">
-                                                <a href="<?= BASE_URL ?>/matriculas/<?= $matricula['id'] ?>" class="btn btn-sm btn-secondary" title="Ver detalhes">
-                                                    Ver
-                                                </a>
-                                                <a href="<?= BASE_URL ?>/matriculas/<?= $matricula['id'] ?>/edit" class="btn btn-sm btn-primary" title="Editar">
-                                                    Editar
-                                                </a>
+                                        <a href="<?= BASE_URL ?>/matriculas/<?= $matricula['id'] ?>" class="btn btn-sm btn-secondary" title="Ver detalhes">
+                                            Ver
+                                        </a>
+                                        <a href="<?= BASE_URL ?>/matriculas/<?= $matricula['id'] ?>/edit" class="btn btn-sm btn-primary" title="Editar">
+                                            Editar
+                                        </a>
                                                 <form method="POST" action="<?= BASE_URL ?>/matriculas/<?= $matricula['id'] ?>/delete" style="display: inline-block; margin: 0; padding: 0;" onsubmit="return confirm('Tem certeza que deseja remover esta matrícula? Esta ação não pode ser desfeita.');">
                                                     <?php
                                                     if (empty($_SESSION['csrf_token'])) {
@@ -254,8 +254,8 @@
                                 <?php endforeach; ?>
                             </div>
                         </div>
-                    </div>
-                <?php endforeach; ?>
+                                    </div>
+                        <?php endforeach; ?>
             </div>
         <?php endif; ?>
     </div>

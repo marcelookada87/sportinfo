@@ -85,11 +85,55 @@
                 <?php endif; ?>
                 
                 <?php 
-                $multaJuros = (float)($mensalidade['multa'] ?? 0) + (float)($mensalidade['juros'] ?? 0);
+                $multa = (float)($mensalidade['multa'] ?? 0);
+                $juros = (float)($mensalidade['juros'] ?? 0);
+                $multaJuros = $multa + $juros;
                 if ($multaJuros > 0): 
                 ?>
+                <div class="details-item" style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 0.5rem;">
+                    <dt style="font-weight: 600; color: var(--error-color);">Encargos por Atraso</dt>
+                    <dd></dd>
+                </div>
+                
+                <?php if ($multa > 0): ?>
                 <div class="details-item">
-                    <dt>Multa e Juros</dt>
+                    <dt>
+                        Multa
+                        <?php if ($isAtrasada && $diasAtraso > 0): ?>
+                            <small style="color: var(--text-secondary); font-weight: normal; display: block; margin-top: 0.25rem;">
+                                (aplicada após vencimento)
+                            </small>
+                        <?php endif; ?>
+                    </dt>
+                    <dd>
+                        <span style="color: var(--error-color); font-weight: 600;">
+                            + R$ <?= number_format($multa, 2, ',', '.') ?>
+                        </span>
+                    </dd>
+                </div>
+                <?php endif; ?>
+                
+                <?php if ($juros > 0): ?>
+                <div class="details-item">
+                    <dt>
+                        Juros
+                        <?php if ($isAtrasada && $diasAtraso > 0): ?>
+                            <small style="color: var(--text-secondary); font-weight: normal; display: block; margin-top: 0.25rem;">
+                                (<?= $diasAtraso ?> dia<?= $diasAtraso > 1 ? 's' : '' ?> de atraso)
+                            </small>
+                        <?php endif; ?>
+                    </dt>
+                    <dd>
+                        <span style="color: var(--error-color); font-weight: 600;">
+                            + R$ <?= number_format($juros, 2, ',', '.') ?>
+                        </span>
+                    </dd>
+                </div>
+                <?php endif; ?>
+                
+                <?php if ($multa > 0 || $juros > 0): ?>
+                <div class="details-item" style="border-top: 1px solid var(--border-color); padding-top: 0.5rem; margin-top: 0.5rem;">
+                    <dt>Total de Encargos</dt>
                     <dd>
                         <span style="color: var(--error-color); font-weight: 600;">
                             + R$ <?= number_format($multaJuros, 2, ',', '.') ?>
@@ -97,15 +141,45 @@
                     </dd>
                 </div>
                 <?php endif; ?>
+                <?php endif; ?>
                 
-                <div class="details-item">
-                    <dt>Valor Total</dt>
+                <div class="details-item" style="border-top: 2px solid var(--primary-color); padding-top: 1rem; margin-top: 1rem;">
+                    <dt style="font-size: 1.1rem; font-weight: 700;">Valor Total a Pagar</dt>
                     <dd>
-                        <strong style="font-size: 1.5rem; color: var(--primary-color);">
+                        <strong style="font-size: 1.8rem; color: var(--primary-color);">
                             R$ <?= number_format($valorTotal, 2, ',', '.') ?>
                         </strong>
                     </dd>
                 </div>
+                
+                <?php if ($multaJuros > 0): ?>
+                <div class="details-item" style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 0.25rem;">
+                    <dt style="font-weight: 600; margin-bottom: 0.5rem;">Composição do Valor Total:</dt>
+                    <dd style="font-size: 0.9rem; line-height: 1.6;">
+                        <div style="margin-bottom: 0.25rem;">
+                            <strong>Valor Base:</strong> R$ <?= number_format((float)$mensalidade['valor'], 2, ',', '.') ?>
+                        </div>
+                        <?php if ((float)($mensalidade['desconto'] ?? 0) > 0): ?>
+                        <div style="margin-bottom: 0.25rem; color: var(--success-color);">
+                            <strong>Desconto:</strong> - R$ <?= number_format((float)$mensalidade['desconto'], 2, ',', '.') ?>
+                        </div>
+                        <?php endif; ?>
+                        <?php if ($multa > 0): ?>
+                        <div style="margin-bottom: 0.25rem; color: var(--error-color);">
+                            <strong>Multa:</strong> + R$ <?= number_format($multa, 2, ',', '.') ?>
+                        </div>
+                        <?php endif; ?>
+                        <?php if ($juros > 0): ?>
+                        <div style="margin-bottom: 0.25rem; color: var(--error-color);">
+                            <strong>Juros (<?= $diasAtraso ?? 0 ?> dia<?= ($diasAtraso ?? 0) > 1 ? 's' : '' ?>):</strong> + R$ <?= number_format($juros, 2, ',', '.') ?>
+                        </div>
+                        <?php endif; ?>
+                        <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #ddd; font-weight: 600;">
+                            <strong>Total:</strong> R$ <?= number_format($valorTotal, 2, ',', '.') ?>
+                        </div>
+                    </dd>
+                </div>
+                <?php endif; ?>
                 
                 <div class="details-item">
                     <dt>Data de Vencimento</dt>
@@ -114,11 +188,10 @@
                         $dtVencimento = new \DateTime($mensalidade['dt_vencimento']);
                         $hoje = new \DateTime();
                         
-                        if ($isAtrasada) {
-                            $diasAtraso = $hoje->diff($dtVencimento)->days;
+                        if ($isAtrasada && isset($diasAtraso) && $diasAtraso > 0) {
                             echo '<span style="color: var(--error-color); font-weight: 600;">';
                             echo $dtVencimento->format('d/m/Y');
-                            echo ' <small>(' . $diasAtraso . ' dias atrasado)</small>';
+                            echo ' <small>(' . $diasAtraso . ' dia' . ($diasAtraso > 1 ? 's' : '') . ' atrasado)</small>';
                             echo '</span>';
                         } else {
                             echo $dtVencimento->format('d/m/Y');
@@ -159,16 +232,58 @@
         <div class="card-body">
             <div style="margin-bottom: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 0.5rem;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                    <span>Valor Total:</span>
-                    <strong>R$ <?= number_format($valorTotal, 2, ',', '.') ?></strong>
+                    <span>Valor Base:</span>
+                    <strong>R$ <?= number_format((float)$mensalidade['valor'], 2, ',', '.') ?></strong>
                 </div>
+                
+                <?php if ((float)($mensalidade['desconto'] ?? 0) > 0): ?>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span>Desconto:</span>
+                    <strong style="color: var(--success-color);">- R$ <?= number_format((float)$mensalidade['desconto'], 2, ',', '.') ?></strong>
+                </div>
+                <?php endif; ?>
+                
+                <?php 
+                $multa = (float)($mensalidade['multa'] ?? 0);
+                $juros = (float)($mensalidade['juros'] ?? 0);
+                if ($multa > 0 || $juros > 0): 
+                ?>
+                <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
+                    <div style="font-weight: 600; color: var(--error-color); margin-bottom: 0.5rem; font-size: 0.9rem;">
+                        Encargos por Atraso:
+                    </div>
+                    
+                    <?php if ($multa > 0): ?>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem; padding-left: 0.5rem;">
+                        <span style="font-size: 0.9rem;">Multa:</span>
+                        <strong style="color: var(--error-color); font-size: 0.9rem;">+ R$ <?= number_format($multa, 2, ',', '.') ?></strong>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <?php if ($juros > 0): ?>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem; padding-left: 0.5rem;">
+                        <span style="font-size: 0.9rem;">
+                            Juros<?= isset($diasAtraso) && $diasAtraso > 0 ? ' (' . $diasAtraso . ' dia' . ($diasAtraso > 1 ? 's' : '') . ')' : '' ?>:
+                        </span>
+                        <strong style="color: var(--error-color); font-size: 0.9rem;">+ R$ <?= number_format($juros, 2, ',', '.') ?></strong>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <?php endif; ?>
+                
+                <div style="display: flex; justify-content: space-between; border-top: 2px solid var(--primary-color); padding-top: 0.75rem; margin-top: 0.75rem;">
+                    <span style="font-weight: 600; font-size: 1.05rem;">Valor Total:</span>
+                    <strong style="font-size: 1.1rem; color: var(--primary-color);">R$ <?= number_format($valorTotal, 2, ',', '.') ?></strong>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
                     <span>Total Pago:</span>
                     <strong style="color: var(--success-color);">R$ <?= number_format($totalPago, 2, ',', '.') ?></strong>
                 </div>
-                <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 0.5rem; margin-top: 0.5rem;">
-                    <span>Restante:</span>
-                    <strong style="color: var(--<?= ($valorTotal - $totalPago) > 0 ? 'error' : 'success' ?>-color);">
+                
+                <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 0.75rem; margin-top: 0.75rem;">
+                    <span style="font-weight: 600;">Restante:</span>
+                    <strong style="color: var(--<?= ($valorTotal - $totalPago) > 0 ? 'error' : 'success' ?>-color); font-size: 1.05rem;">
                         R$ <?= number_format(max(0, $valorTotal - $totalPago), 2, ',', '.') ?>
                     </strong>
                 </div>

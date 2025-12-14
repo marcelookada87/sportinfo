@@ -54,8 +54,19 @@ class FinanceiroController extends Controller
         $total = $mensalidadeModel->countWithFilters($filters);
         $totalPages = ceil($total / 20);
 
-        // Adiciona valor total calculado para cada mensalidade
+        // Calcula e atualiza multa e juros automaticamente para mensalidades vencidas
         foreach ($mensalidades as &$mensalidade) {
+            // Atualiza multa e juros se necessário
+            $mensalidadeModel->calcularEAtualizarMultaEJuros((int)$mensalidade['id']);
+            
+            // Busca novamente para pegar valores atualizados
+            $mensalidadeAtualizada = $mensalidadeModel->find((int)$mensalidade['id']);
+            if ($mensalidadeAtualizada) {
+                $mensalidade['multa'] = $mensalidadeAtualizada['multa'];
+                $mensalidade['juros'] = $mensalidadeAtualizada['juros'];
+                $mensalidade['status'] = $mensalidadeAtualizada['status'];
+            }
+            
             $mensalidade['valor_total'] = $mensalidadeModel->calcularValorTotal((int)$mensalidade['id']);
             $mensalidade['is_atrasada'] = $mensalidadeModel->isAtrasada((int)$mensalidade['id']);
         }
@@ -171,6 +182,54 @@ class FinanceiroController extends Controller
             'content' => $content,
             'usuario' => $usuario
         ]);
+    }
+
+    /**
+     * Atualiza multa e juros de todas as mensalidades vencidas
+     */
+    public function atualizarMensalidades(): void
+    {
+        // Verifica autenticação
+        if (empty($_SESSION['usuario_id'])) {
+            $this->redirect('/login');
+            return;
+        }
+
+        // Valida método POST
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/financeiro');
+            return;
+        }
+
+        // Valida CSRF
+        $csrfToken = $_POST['csrf_token'] ?? '';
+        if (!$this->validateCsrfToken($csrfToken)) {
+            $_SESSION['error'] = 'Token de segurança inválido.';
+            $this->redirect('/financeiro');
+            return;
+        }
+
+        // Proteção contra duplo submit
+        if ($this->isDuplicateRequest($csrfToken)) {
+            $_SESSION['error'] = 'Requisição duplicada detectada. Aguarde um momento antes de tentar novamente.';
+            $this->redirect('/financeiro');
+            return;
+        }
+
+        try {
+            $mensalidadeModel = new Mensalidade();
+            $atualizadas = $mensalidadeModel->atualizarMultaEJurosVencidas();
+            
+            if ($atualizadas > 0) {
+                $_SESSION['success'] = "{$atualizadas} mensalidade(s) atualizada(s) com sucesso! Multa e juros foram recalculados.";
+            } else {
+                $_SESSION['success'] = 'Nenhuma mensalidade vencida encontrada para atualizar.';
+            }
+        } catch (\Exception $e) {
+            $_SESSION['error'] = 'Erro ao atualizar mensalidades: ' . $e->getMessage();
+        }
+
+        $this->redirect('/financeiro');
     }
 
     /**
@@ -351,9 +410,23 @@ class FinanceiroController extends Controller
             return;
         }
 
+        // Calcula e atualiza multa e juros automaticamente se necessário
+        $mensalidadeModel->calcularEAtualizarMultaEJuros($id);
+        
+        // Busca novamente para pegar valores atualizados
+        $mensalidade = $mensalidadeModel->findWithDetails($id);
+        
         // Calcula valor total
         $valorTotal = $mensalidadeModel->calcularValorTotal($id);
         $isAtrasada = $mensalidadeModel->isAtrasada($id);
+        
+        // Calcula dias de atraso se estiver vencida
+        $diasAtraso = 0;
+        if ($isAtrasada && !empty($mensalidade['dt_vencimento'])) {
+            $hoje = new \DateTime();
+            $vencimento = new \DateTime($mensalidade['dt_vencimento']);
+            $diasAtraso = (int)$hoje->diff($vencimento)->days;
+        }
 
         // Busca pagamentos desta mensalidade
         $pagamentoModel = new Pagamento();
@@ -365,6 +438,7 @@ class FinanceiroController extends Controller
             'mensalidade' => $mensalidade,
             'valorTotal' => $valorTotal,
             'isAtrasada' => $isAtrasada,
+            'diasAtraso' => $diasAtraso,
             'pagamentos' => $pagamentos,
             'totalPago' => $totalPago
         ]);

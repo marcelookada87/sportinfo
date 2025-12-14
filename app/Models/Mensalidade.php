@@ -279,6 +279,85 @@ class Mensalidade extends Model
     }
 
     /**
+     * Calcula e atualiza multa e juros automaticamente para uma mensalidade
+     */
+    public function calcularEAtualizarMultaEJuros(int $mensalidadeId): bool
+    {
+        $mensalidade = $this->find($mensalidadeId);
+        if (!$mensalidade) {
+            return false;
+        }
+
+        // Se já está paga ou cancelada, não atualiza
+        if (in_array($mensalidade['status'], ['Pago', 'Cancelado'])) {
+            return false;
+        }
+
+        $configModel = new \App\Models\ConfiguracaoFinanceira();
+        $calculo = $configModel->calcularMultaEJuros(
+            (float)$mensalidade['valor'],
+            $mensalidade['dt_vencimento']
+        );
+
+        // Atualiza multa e juros
+        $data = [
+            'multa' => $calculo['multa'],
+            'juros' => $calculo['juros']
+        ];
+
+        // Se está vencida e ainda está como "Aberto", muda para "Atrasado"
+        if ($calculo['dias_atraso'] > 0 && $mensalidade['status'] === 'Aberto') {
+            $data['status'] = 'Atrasado';
+        }
+
+        return $this->update($mensalidadeId, $data);
+    }
+
+    /**
+     * Calcula e atualiza multa e juros para todas as mensalidades vencidas
+     */
+    public function atualizarMultaEJurosVencidas(): int
+    {
+        $hoje = date('Y-m-d');
+        
+        // Busca mensalidades vencidas que não estão pagas ou canceladas
+        $sql = "SELECT id, valor, dt_vencimento, status 
+                FROM {$this->table} 
+                WHERE dt_vencimento < :hoje 
+                AND status NOT IN ('Pago', 'Cancelado')";
+        
+        $stmt = self::getConnection()->prepare($sql);
+        $stmt->execute(['hoje' => $hoje]);
+        $mensalidades = $stmt->fetchAll() ?: [];
+
+        $configModel = new \App\Models\ConfiguracaoFinanceira();
+        $atualizadas = 0;
+
+        foreach ($mensalidades as $mensalidade) {
+            $calculo = $configModel->calcularMultaEJuros(
+                (float)$mensalidade['valor'],
+                $mensalidade['dt_vencimento']
+            );
+
+            $data = [
+                'multa' => $calculo['multa'],
+                'juros' => $calculo['juros']
+            ];
+
+            // Se está vencida e ainda está como "Aberto", muda para "Atrasado"
+            if ($calculo['dias_atraso'] > 0 && $mensalidade['status'] === 'Aberto') {
+                $data['status'] = 'Atrasado';
+            }
+
+            if ($this->update((int)$mensalidade['id'], $data)) {
+                $atualizadas++;
+            }
+        }
+
+        return $atualizadas;
+    }
+
+    /**
      * Obtém estatísticas financeiras
      */
     public function getEstatisticas(array $filters = []): array

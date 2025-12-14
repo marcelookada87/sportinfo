@@ -92,6 +92,7 @@ $router->post('/turmas/{id}/delete', 'TurmasController', 'delete');
 $router->get('/financeiro', 'FinanceiroController', 'index');
 $router->get('/financeiro/create', 'FinanceiroController', 'create');
 $router->post('/financeiro', 'FinanceiroController', 'store');
+$router->post('/financeiro/atualizar-mensalidades', 'FinanceiroController', 'atualizarMensalidades');
 $router->get('/financeiro/{id}', 'FinanceiroController', 'show');
 $router->get('/financeiro/{id}/edit', 'FinanceiroController', 'edit');
 $router->post('/financeiro/{id}', 'FinanceiroController', 'update');
@@ -100,6 +101,10 @@ $router->get('/financeiro/pagamentos', 'FinanceiroController', 'pagamentos');
 $router->get('/financeiro/pagamento/{mensalidade_id}/create', 'FinanceiroController', 'pagamentoCreate');
 $router->post('/financeiro/pagamento', 'FinanceiroController', 'pagamentoStore');
 $router->get('/financeiro/pagamento/{id}', 'FinanceiroController', 'pagamentoShow');
+
+// Rotas de Configurações
+$router->get('/configuracoes', 'ConfiguracoesController', 'index');
+$router->post('/configuracoes', 'ConfiguracoesController', 'index');
 
 // Resolve rota
 $router->resolve();

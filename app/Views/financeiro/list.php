@@ -4,6 +4,22 @@
         <p class="page-subtitle">Gerencie mensalidades e pagamentos</p>
     </div>
     <div style="display: flex; gap: 0.5rem;">
+        <form method="POST" action="<?= BASE_URL ?>/financeiro/atualizar-mensalidades" style="display: inline-block;" onsubmit="return confirm('Deseja atualizar multa e juros de todas as mensalidades vencidas de TODOS os alunos?');">
+            <?php
+            if (empty($_SESSION['csrf_token'])) {
+                $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+            }
+            ?>
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+            <button type="submit" class="btn btn-secondary">
+                <svg style="width: 16px; height: 16px; margin-right: 0.5rem; vertical-align: middle; display: inline-block;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                Atualizar Mensalidades
+            </button>
+        </form>
         <a href="<?= BASE_URL ?>/financeiro/pagamentos" class="btn btn-secondary">
             Pagamentos
         </a>
@@ -316,23 +332,23 @@
                 </div>
             <?php else: ?>
                 <!-- Fallback para tabela tradicional se não houver agrupamento -->
-                <div class="table-responsive">
-                    <table id="mensalidadesTable" class="table table-striped table-hover">
-                        <thead>
-                            <tr>
-                                <th>Aluno</th>
-                                <th>Competência</th>
-                                <th>Valor</th>
-                                <th>Desconto</th>
-                                <th>Multa/Juros</th>
-                                <th>Valor Total</th>
-                                <th>Vencimento</th>
-                                <th>Status</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($mensalidades as $mensalidade): ?>
+            <div class="table-responsive">
+                <table id="mensalidadesTable" class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Aluno</th>
+                            <th>Competência</th>
+                            <th>Valor</th>
+                            <th>Desconto</th>
+                            <th>Multa/Juros</th>
+                            <th>Valor Total</th>
+                            <th>Vencimento</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($mensalidades as $mensalidade): ?>
                             <tr style="<?= ($mensalidade['is_atrasada'] ?? false) ? 'background-color: #fff3cd;' : '' ?>">
                                 <td>
                                     <strong><?= htmlspecialchars($mensalidade['aluno_nome'] ?? '', ENT_QUOTES, 'UTF-8') ?></strong>

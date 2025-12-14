@@ -115,6 +115,15 @@
                             <span class="sidebar-menu-text">Relatórios</span>
                         </a>
                     </li>
+                    <li class="sidebar-menu-divider">
+                        <hr style="margin: 0.75rem 1rem; border: none; border-top: 1px solid rgba(255, 255, 255, 0.2);">
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="<?= BASE_URL ?>/configuracoes" class="sidebar-menu-link <?= isActive('/configuracoes', $currentPath) ? 'active' : '' ?>">
+                            <span class="sidebar-menu-icon icon-settings"></span>
+                            <span class="sidebar-menu-text">Configurações</span>
+                        </a>
+                    </li>
                 </nav>
             </aside>
             

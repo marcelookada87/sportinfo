@@ -396,10 +396,10 @@ class MatriculasController extends Controller
         $matriculasCriadas = [];
         $erros = [];
         $pdo = \App\Core\Model::getConnection();
-        
-        try {
-            $pdo->beginTransaction();
-            
+
+            try {
+                $pdo->beginTransaction();
+
             foreach ($turmasIds as $turmaId) {
                 $data = [
                     'aluno_id' => $alunoId,
@@ -425,11 +425,11 @@ class MatriculasController extends Controller
             } else {
                 $totalMensalidadesGeradas = 0;
             }
-        } catch (\Exception $e) {
-            if (isset($pdo) && $pdo->inTransaction()) {
-                $pdo->rollBack();
-            }
-            
+            } catch (\Exception $e) {
+                if (isset($pdo) && $pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+                
             $_SESSION['error'] = 'Erro ao cadastrar matrículas: ' . $e->getMessage();
             $this->redirect('/matriculas/create');
             return;
@@ -444,7 +444,7 @@ class MatriculasController extends Controller
                 $mensagem .= " {$totalMensalidadesGeradas} mensalidade(s) gerada(s) automaticamente (consolidadas).";
             }
             
-            $_SESSION['success'] = $mensagem;
+                $_SESSION['success'] = $mensagem;
             
             // Redireciona para a primeira matrícula criada ou lista
             if (count($matriculasCriadas) === 1) {

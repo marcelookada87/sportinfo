@@ -41,8 +41,9 @@ class Matricula extends Model
      */
     public function findAllWithFilters(array $filters = []): array
     {
-        $sql = "SELECT m.*, a.nome as aluno_nome, a.cpf as aluno_cpf,
+        $sql = "SELECT m.*, m.aluno_id, a.nome as aluno_nome, a.cpf as aluno_cpf,
                        t.nome as turma_nome, t.capacidade as turma_capacidade,
+                       t.dias_da_semana as turma_dias, t.hora_inicio as turma_hora_inicio, t.hora_fim as turma_hora_fim, t.local as turma_local,
                        md.nome as modalidade_nome, md.id as modalidade_id,
                        p.nome as plano_nome, p.periodicidade as plano_periodicidade, p.valor_base as plano_valor_base,
                        pr.nome as professor_nome

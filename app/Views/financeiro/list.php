@@ -274,6 +274,17 @@
                                                 Pagar
                                             </a>
                                         <?php endif; ?>
+                                        <form method="POST" action="<?= BASE_URL ?>/financeiro/<?= $mensalidade['id'] ?>/delete" style="display: inline-block; margin: 0; padding: 0;" onsubmit="return confirm('Tem certeza que deseja remover esta mensalidade? Esta ação não pode ser desfeita.');">
+                                            <?php
+                                            if (empty($_SESSION['csrf_token'])) {
+                                                $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+                                            }
+                                            ?>
+                                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                                            <button type="submit" class="btn btn-sm btn-danger" title="Remover mensalidade">
+                                                Remover
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>

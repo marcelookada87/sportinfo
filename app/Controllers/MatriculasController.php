@@ -50,6 +50,25 @@ class MatriculasController extends Controller
         $total = $matriculaModel->countWithFilters($filters);
         $totalPages = ceil($total / 20);
 
+        // Agrupa matrículas por aluno
+        $matriculasAgrupadas = [];
+        if (!empty($matriculas)) {
+            foreach ($matriculas as $matricula) {
+                $alunoId = isset($matricula['aluno_id']) ? (int)$matricula['aluno_id'] : 0;
+                if ($alunoId > 0) {
+                    if (!isset($matriculasAgrupadas[$alunoId])) {
+                        $matriculasAgrupadas[$alunoId] = [
+                            'aluno_id' => $alunoId,
+                            'aluno_nome' => $matricula['aluno_nome'] ?? '',
+                            'aluno_cpf' => $matricula['aluno_cpf'] ?? '',
+                            'matriculas' => []
+                        ];
+                    }
+                    $matriculasAgrupadas[$alunoId]['matriculas'][] = $matricula;
+                }
+            }
+        }
+
         // Busca dados para filtros
         $alunoModel = new Aluno();
         $planoModel = new Plano();
@@ -77,6 +96,7 @@ class MatriculasController extends Controller
         $content = $this->view->render('matriculas/list', [
             'usuario' => $usuario,
             'matriculas' => $matriculas,
+            'matriculasAgrupadas' => $matriculasAgrupadas,
             'filters' => $filters,
             'total' => $total,
             'currentPage' => (int)($_GET['page'] ?? 0),

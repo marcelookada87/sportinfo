@@ -193,92 +193,221 @@
             <?php if (!empty($mensalidadesAgrupadas)): ?>
                 <!-- Visualização Agrupada/Consolidada -->
                 <div class="mensalidades-agrupadas">
-                    <?php foreach ($mensalidadesAgrupadas as $chave => $grupo): ?>
-                        <?php 
-                        $totalMensalidades = count($grupo['mensalidades']);
-                        $collapseId = 'mensalidade_' . $chave;
-                        ?>
-                        <div class="mensalidade-grupo">
-                            <div class="mensalidade-grupo-header">
-                                <div class="mensalidade-grupo-info">
-                                    <div class="mensalidade-grupo-aluno">
-                                        <strong><?= htmlspecialchars($grupo['aluno_nome'], ENT_QUOTES, 'UTF-8') ?></strong>
-                                        <?php if (!empty($grupo['aluno_cpf'])): ?>
-                                            <small style="color: var(--text-secondary); margin-left: 0.5rem;">CPF: <?= htmlspecialchars($grupo['aluno_cpf'], ENT_QUOTES, 'UTF-8') ?></small>
-                                        <?php endif; ?>
-                                        <?php
-                                        // Converte competência de YYYY-MM para MM/YYYY
-                                        $competenciaFormatada = '';
-                                        if (!empty($grupo['competencia'])) {
-                                            $parts = explode('-', $grupo['competencia']);
-                                            if (count($parts) === 2) {
-                                                $competenciaFormatada = $parts[1] . '/' . $parts[0];
-                                            } else {
-                                                $competenciaFormatada = $grupo['competencia'];
-                                            }
-                                        }
-                                        ?>
-                                        <span class="badge badge-info" style="margin-left: 0.75rem;"><?= htmlspecialchars($competenciaFormatada, ENT_QUOTES, 'UTF-8') ?></span>
-                                        <?php if ($totalMensalidades > 1): ?>
-                                            <span class="badge badge-secondary" style="margin-left: 0.5rem;"><?= $totalMensalidades ?> turmas</span>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="mensalidade-grupo-valores">
-                                        <div class="valor-total-consolidado">
-                                            <?php if (!empty($grupo['dt_vencimento'])): ?>
-                                                <small style="color: var(--text-secondary); margin-right: 1rem;">
-                                                    Vencimento: <?= date('d/m/Y', strtotime($grupo['dt_vencimento'])) ?>
-                                                    <?php if ($grupo['is_atrasada'] ?? false): ?>
-                                                        <span style="color: var(--error-color); font-weight: 600;">(Atrasado)</span>
-                                                    <?php endif; ?>
-                                                </small>
-                                            <?php endif; ?>
-                                            <span class="valor-label">Total:</span>
-                                            <strong style="font-size: 1.2rem; color: var(--primary-color);">
-                                                R$ <?= number_format($grupo['valor_total'], 2, ',', '.') ?>
-                                            </strong>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="mensalidade-grupo-actions">
-                                    <?php if ($totalMensalidades > 1): ?>
-                                        <button type="button" class="btn btn-sm btn-secondary" onclick="toggleMensalidadeGrupo('<?= $collapseId ?>')" title="Ver detalhes das turmas">
-                                            <span id="icon_<?= $collapseId ?>">▼</span>
-                                        </button>
+                    <?php 
+                    // Agrupa por aluno e competência para mostrar separado por modalidade
+                    $agrupadoPorAlunoCompetencia = [];
+                    foreach ($mensalidadesAgrupadas as $chave => $grupo) {
+                        $alunoCompetencia = $grupo['aluno_id'] . '_' . $grupo['competencia'];
+                        if (!isset($agrupadoPorAlunoCompetencia[$alunoCompetencia])) {
+                            $agrupadoPorAlunoCompetencia[$alunoCompetencia] = [];
+                        }
+                        $agrupadoPorAlunoCompetencia[$alunoCompetencia][] = $grupo;
+                    }
+                    ?>
+                    <?php foreach ($agrupadoPorAlunoCompetencia as $alunoCompetencia => $grupos): ?>
+                        <?php if (count($grupos) > 1): ?>
+                            <!-- Aluno com múltiplas modalidades - mostra separado -->
+                            <div style="margin-bottom: 1.5rem; padding: 1rem; background: #f0f9ff; border-left: 4px solid #2563eb; border-radius: 0.25rem;">
+                                <div style="font-weight: 600; margin-bottom: 0.75rem; color: #1e40af;">
+                                    <strong><?= htmlspecialchars($grupos[0]['aluno_nome'], ENT_QUOTES, 'UTF-8') ?></strong>
+                                    <?php if (!empty($grupos[0]['aluno_cpf'])): ?>
+                                        <small style="color: var(--text-secondary); margin-left: 0.5rem;">CPF: <?= htmlspecialchars($grupos[0]['aluno_cpf'], ENT_QUOTES, 'UTF-8') ?></small>
                                     <?php endif; ?>
                                     <?php
-                                    $status = $grupo['status'];
-                                    $statusLabels = [
-                                        'Aberto' => ['label' => 'Aberto', 'class' => 'badge-warning'],
-                                        'Pago' => ['label' => 'Pago', 'class' => 'badge-success'],
-                                        'Parcial' => ['label' => 'Parcial', 'class' => 'badge-info'],
-                                        'Atrasado' => ['label' => 'Atrasado', 'class' => 'badge-danger'],
-                                        'Cancelado' => ['label' => 'Cancelado', 'class' => 'badge-secondary']
-                                    ];
-                                    $statusInfo = $statusLabels[$status] ?? ['label' => $status, 'class' => 'badge-secondary'];
-                                    ?>
-                                    <span class="badge <?= $statusInfo['class'] ?>" style="margin: 0 0.5rem;"><?= $statusInfo['label'] ?></span>
-                                    <a href="<?= BASE_URL ?>/financeiro/<?= $grupo['primeira_mensalidade_id'] ?>" class="btn btn-sm btn-secondary" title="Ver detalhes">
-                                        Ver
-                                    </a>
-                                    <?php if ($status !== 'Pago' && $status !== 'Cancelado'): ?>
-                                        <a href="<?= BASE_URL ?>/financeiro/pagamento/<?= $grupo['primeira_mensalidade_id'] ?>/create" class="btn btn-sm btn-success" title="Registrar pagamento">
-                                            Pagar
-                                        </a>
-                                    <?php endif; ?>
-                                    <form method="POST" action="<?= BASE_URL ?>/financeiro/<?= $grupo['primeira_mensalidade_id'] ?>/delete" style="display: inline-block; margin: 0; padding: 0;" onsubmit="return confirm('Tem certeza que deseja remover esta mensalidade? Esta ação não pode ser desfeita.');">
-                                        <?php
-                                        if (empty($_SESSION['csrf_token'])) {
-                                            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+                                    $competenciaFormatada = '';
+                                    if (!empty($grupos[0]['competencia'])) {
+                                        $parts = explode('-', $grupos[0]['competencia']);
+                                        if (count($parts) === 2) {
+                                            $competenciaFormatada = $parts[1] . '/' . $parts[0];
                                         }
-                                        ?>
-                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                                        <button type="submit" class="btn btn-sm btn-danger" title="Remover mensalidade">
-                                            Remover
-                                        </button>
-                                    </form>
+                                    }
+                                    ?>
+                                    <span class="badge badge-info" style="margin-left: 0.75rem;"><?= htmlspecialchars($competenciaFormatada, ENT_QUOTES, 'UTF-8') ?></span>
+                                    <small style="color: var(--text-secondary); margin-left: 0.5rem;">(<?= count($grupos) ?> modalidade<?= count($grupos) > 1 ? 's' : '' ?>)</small>
                                 </div>
+                                <?php foreach ($grupos as $grupo): ?>
+                                    <?php 
+                                    $totalMensalidades = count($grupo['mensalidades']);
+                                    $collapseId = 'mensalidade_' . md5($grupo['aluno_id'] . '_' . $grupo['competencia'] . '_' . $grupo['modalidade_nome']);
+                                    ?>
+                                    <div class="mensalidade-grupo" style="margin-bottom: 1rem; margin-left: 1rem; border-left: 3px solid #93c5fd; padding-left: 1rem;">
+                                        <div class="mensalidade-grupo-header">
+                                            <div class="mensalidade-grupo-info">
+                                                <div class="mensalidade-grupo-aluno">
+                                                    <?php if (!empty($grupo['modalidade_nome'])): ?>
+                                                        <span class="badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; margin-right: 0.5rem;">
+                                                            <?= htmlspecialchars($grupo['modalidade_nome'], ENT_QUOTES, 'UTF-8') ?>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                    <?php if ($totalMensalidades > 1): ?>
+                                                        <span class="badge badge-secondary"><?= $totalMensalidades ?> turmas</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="mensalidade-grupo-valores">
+                                                    <div class="valor-total-consolidado">
+                                                        <?php if (!empty($grupo['dt_vencimento'])): ?>
+                                                            <small style="color: var(--text-secondary); margin-right: 1rem;">
+                                                                Vencimento: <?= date('d/m/Y', strtotime($grupo['dt_vencimento'])) ?>
+                                                                <?php if ($grupo['is_atrasada'] ?? false): ?>
+                                                                    <span style="color: var(--error-color); font-weight: 600;">(Atrasado)</span>
+                                                                <?php endif; ?>
+                                                            </small>
+                                                        <?php endif; ?>
+                                                        <span class="valor-label">Total:</span>
+                                                        <strong style="font-size: 1.2rem; color: var(--primary-color);">
+                                                            R$ <?= number_format($grupo['valor_total'], 2, ',', '.') ?>
+                                                        </strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mensalidade-grupo-actions">
+                                                <?php if ($totalMensalidades > 1): ?>
+                                                    <button type="button" class="btn btn-sm btn-secondary" onclick="toggleMensalidadeGrupo('<?= $collapseId ?>')" title="Ver detalhes das turmas">
+                                                        <span id="icon_<?= $collapseId ?>">▼</span>
+                                                    </button>
+                                                <?php endif; ?>
+                                                <?php
+                                                $status = $grupo['status'];
+                                                $statusLabels = [
+                                                    'Aberto' => ['label' => 'Aberto', 'class' => 'badge-warning'],
+                                                    'Pago' => ['label' => 'Pago', 'class' => 'badge-success'],
+                                                    'Parcial' => ['label' => 'Parcial', 'class' => 'badge-info'],
+                                                    'Atrasado' => ['label' => 'Atrasado', 'class' => 'badge-danger'],
+                                                    'Cancelado' => ['label' => 'Cancelado', 'class' => 'badge-secondary']
+                                                ];
+                                                $statusInfo = $statusLabels[$status] ?? ['label' => $status, 'class' => 'badge-secondary'];
+                                                ?>
+                                                <span class="badge <?= $statusInfo['class'] ?>" style="margin: 0 0.5rem;"><?= $statusInfo['label'] ?></span>
+                                                <a href="<?= BASE_URL ?>/financeiro/<?= $grupo['primeira_mensalidade_id'] ?>" class="btn btn-sm btn-secondary" title="Ver detalhes">
+                                                    Ver
+                                                </a>
+                                                <?php if ($status !== 'Pago' && $status !== 'Cancelado'): ?>
+                                                    <a href="<?= BASE_URL ?>/financeiro/pagamento/<?= $grupo['primeira_mensalidade_id'] ?>/create" class="btn btn-sm btn-success" title="Registrar pagamento">
+                                                        Pagar
+                                                    </a>
+                                                <?php endif; ?>
+                                                <form method="POST" action="<?= BASE_URL ?>/financeiro/<?= $grupo['primeira_mensalidade_id'] ?>/delete" style="display: inline-block; margin: 0; padding: 0;" onsubmit="return confirm('Tem certeza que deseja remover esta mensalidade? Esta ação não pode ser desfeita.');">
+                                                    <?php
+                                                    if (empty($_SESSION['csrf_token'])) {
+                                                        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+                                                    }
+                                                    ?>
+                                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                                                    <button type="submit" class="btn btn-sm btn-danger" title="Remover mensalidade">
+                                                        Remover
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        <?php if ($totalMensalidades > 1): ?>
+                                            <div id="<?= $collapseId ?>" class="mensalidade-grupo-detalhes" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 0.25rem;">
+                                                <strong style="display: block; margin-bottom: 0.5rem;">Turmas:</strong>
+                                                <ul style="list-style: none; padding: 0; margin: 0;">
+                                                    <?php foreach ($grupo['mensalidades'] as $msg): ?>
+                                                        <li style="padding: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                                                            <?= htmlspecialchars($msg['turma_nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>
+                                                            <span class="badge badge-secondary" style="margin-left: 0.5rem;"><?= htmlspecialchars($msg['status'] ?? 'Aberto', ENT_QUOTES, 'UTF-8') ?></span>
+                                                        </li>
+                                                    <?php endforeach; ?>
+                                                </ul>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endforeach; ?>
                             </div>
+                        <?php else: ?>
+                            <!-- Aluno com uma única modalidade - mostra normal -->
+                            <?php 
+                            $grupo = $grupos[0];
+                            $totalMensalidades = count($grupo['mensalidades']);
+                            $collapseId = 'mensalidade_' . md5($grupo['aluno_id'] . '_' . $grupo['competencia'] . '_' . ($grupo['modalidade_nome'] ?? ''));
+                            ?>
+                            <div class="mensalidade-grupo">
+                                <div class="mensalidade-grupo-header">
+                                    <div class="mensalidade-grupo-info">
+                                        <div class="mensalidade-grupo-aluno">
+                                            <strong><?= htmlspecialchars($grupo['aluno_nome'], ENT_QUOTES, 'UTF-8') ?></strong>
+                                            <?php if (!empty($grupo['aluno_cpf'])): ?>
+                                                <small style="color: var(--text-secondary); margin-left: 0.5rem;">CPF: <?= htmlspecialchars($grupo['aluno_cpf'], ENT_QUOTES, 'UTF-8') ?></small>
+                                            <?php endif; ?>
+                                            <?php
+                                            // Converte competência de YYYY-MM para MM/YYYY
+                                            $competenciaFormatada = '';
+                                            if (!empty($grupo['competencia'])) {
+                                                $parts = explode('-', $grupo['competencia']);
+                                                if (count($parts) === 2) {
+                                                    $competenciaFormatada = $parts[1] . '/' . $parts[0];
+                                                } else {
+                                                    $competenciaFormatada = $grupo['competencia'];
+                                                }
+                                            }
+                                            ?>
+                                            <span class="badge badge-info" style="margin-left: 0.75rem;"><?= htmlspecialchars($competenciaFormatada, ENT_QUOTES, 'UTF-8') ?></span>
+                                            <?php if (!empty($grupo['modalidade_nome'])): ?>
+                                                <span class="badge" style="margin-left: 0.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                                                    <?= htmlspecialchars($grupo['modalidade_nome'], ENT_QUOTES, 'UTF-8') ?>
+                                                </span>
+                                            <?php endif; ?>
+                                            <?php if ($totalMensalidades > 1): ?>
+                                                <span class="badge badge-secondary" style="margin-left: 0.5rem;"><?= $totalMensalidades ?> turmas</span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="mensalidade-grupo-valores">
+                                            <div class="valor-total-consolidado">
+                                                <?php if (!empty($grupo['dt_vencimento'])): ?>
+                                                    <small style="color: var(--text-secondary); margin-right: 1rem;">
+                                                        Vencimento: <?= date('d/m/Y', strtotime($grupo['dt_vencimento'])) ?>
+                                                        <?php if ($grupo['is_atrasada'] ?? false): ?>
+                                                            <span style="color: var(--error-color); font-weight: 600;">(Atrasado)</span>
+                                                        <?php endif; ?>
+                                                    </small>
+                                                <?php endif; ?>
+                                                <span class="valor-label">Total:</span>
+                                                <strong style="font-size: 1.2rem; color: var(--primary-color);">
+                                                    R$ <?= number_format($grupo['valor_total'], 2, ',', '.') ?>
+                                                </strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mensalidade-grupo-actions">
+                                        <?php if ($totalMensalidades > 1): ?>
+                                            <button type="button" class="btn btn-sm btn-secondary" onclick="toggleMensalidadeGrupo('<?= $collapseId ?>')" title="Ver detalhes das turmas">
+                                                <span id="icon_<?= $collapseId ?>">▼</span>
+                                            </button>
+                                        <?php endif; ?>
+                                        <?php
+                                        $status = $grupo['status'];
+                                        $statusLabels = [
+                                            'Aberto' => ['label' => 'Aberto', 'class' => 'badge-warning'],
+                                            'Pago' => ['label' => 'Pago', 'class' => 'badge-success'],
+                                            'Parcial' => ['label' => 'Parcial', 'class' => 'badge-info'],
+                                            'Atrasado' => ['label' => 'Atrasado', 'class' => 'badge-danger'],
+                                            'Cancelado' => ['label' => 'Cancelado', 'class' => 'badge-secondary']
+                                        ];
+                                        $statusInfo = $statusLabels[$status] ?? ['label' => $status, 'class' => 'badge-secondary'];
+                                        ?>
+                                        <span class="badge <?= $statusInfo['class'] ?>" style="margin: 0 0.5rem;"><?= $statusInfo['label'] ?></span>
+                                        <a href="<?= BASE_URL ?>/financeiro/<?= $grupo['primeira_mensalidade_id'] ?>" class="btn btn-sm btn-secondary" title="Ver detalhes">
+                                            Ver
+                                        </a>
+                                        <?php if ($status !== 'Pago' && $status !== 'Cancelado'): ?>
+                                            <a href="<?= BASE_URL ?>/financeiro/pagamento/<?= $grupo['primeira_mensalidade_id'] ?>/create" class="btn btn-sm btn-success" title="Registrar pagamento">
+                                                Pagar
+                                            </a>
+                                        <?php endif; ?>
+                                        <form method="POST" action="<?= BASE_URL ?>/financeiro/<?= $grupo['primeira_mensalidade_id'] ?>/delete" style="display: inline-block; margin: 0; padding: 0;" onsubmit="return confirm('Tem certeza que deseja remover esta mensalidade? Esta ação não pode ser desfeita.');">
+                                            <?php
+                                            if (empty($_SESSION['csrf_token'])) {
+                                                $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+                                            }
+                                            ?>
+                                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                                            <button type="submit" class="btn btn-sm btn-danger" title="Remover mensalidade">
+                                                Remover
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
                             <?php if ($totalMensalidades > 1): ?>
                                 <div class="mensalidade-grupo-content" id="<?= $collapseId ?>" style="display: none;">
                                     <div class="mensalidades-lista-detalhes">
@@ -327,7 +456,8 @@
                                     </div>
                                 </div>
                             <?php endif; ?>
-                        </div>
+                            </div>
+                        <?php endif; ?>
                     <?php endforeach; ?>
                 </div>
             <?php else: ?>

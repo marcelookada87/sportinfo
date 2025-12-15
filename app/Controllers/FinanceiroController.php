@@ -72,25 +72,28 @@ class FinanceiroController extends Controller
         }
         unset($mensalidade);
 
-        // Agrupa mensalidades por aluno e competência (consolidação)
-        // IMPORTANTE: O aluno paga apenas UMA vez pelo plano, independente de quantas turmas
-        // Por isso, não somamos os valores, pegamos apenas o valor do plano
+        // Agrupa mensalidades por aluno, competência e modalidade (consolidação)
+        // IMPORTANTE: O aluno paga apenas UMA vez pelo plano por modalidade
+        // Se tiver matrículas em modalidades diferentes, cada modalidade terá sua mensalidade separada
         $mensalidadesAgrupadas = [];
         foreach ($mensalidades as $mensalidade) {
             $alunoId = isset($mensalidade['aluno_id']) ? (int)$mensalidade['aluno_id'] : 0;
             $competencia = $mensalidade['competencia'] ?? '';
+            $modalidadeNome = $mensalidade['modalidade_nome'] ?? '';
             
             if ($alunoId > 0 && !empty($competencia)) {
-                $chave = $alunoId . '_' . $competencia;
+                // Chave inclui modalidade para separar mensalidades de modalidades diferentes
+                $chave = $alunoId . '_' . $competencia . '_' . md5($modalidadeNome);
                 
                 if (!isset($mensalidadesAgrupadas[$chave])) {
-                    // Cria grupo consolidado
-                    // Usa o valor do plano (não soma), pois o aluno paga apenas uma vez
+                    // Cria grupo consolidado por modalidade
+                    // Usa o valor do plano (não soma), pois o aluno paga apenas uma vez por modalidade
                     $mensalidadesAgrupadas[$chave] = [
                         'aluno_id' => $alunoId,
                         'aluno_nome' => $mensalidade['aluno_nome'] ?? '',
                         'aluno_cpf' => $mensalidade['aluno_cpf'] ?? '',
                         'competencia' => $competencia,
+                        'modalidade_nome' => $modalidadeNome,
                         'valor' => (float)($mensalidade['valor'] ?? 0), // Valor do plano (não soma)
                         'desconto' => (float)($mensalidade['desconto'] ?? 0),
                         'multa' => (float)($mensalidade['multa'] ?? 0),

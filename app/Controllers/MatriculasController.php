@@ -358,6 +358,40 @@ class MatriculasController extends Controller
             return;
         }
 
+        // Valida que todas as turmas sejam da mesma modalidade
+        $pdo = \App\Core\Model::getConnection();
+        $sql = "SELECT DISTINCT t.modalidade_id, m.nome as modalidade_nome 
+                FROM turmas t 
+                INNER JOIN modalidades m ON t.modalidade_id = m.id 
+                WHERE t.id IN (" . implode(',', array_fill(0, count($turmasIds), '?')) . ")";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($turmasIds);
+        $modalidades = $stmt->fetchAll();
+        
+        if (count($modalidades) > 1) {
+            $nomesModalidades = array_map(function($m) { return $m['modalidade_nome']; }, $modalidades);
+            $_SESSION['error'] = 'Não é possível matricular em turmas de modalidades diferentes na mesma matrícula. Modalidades selecionadas: ' . implode(', ', $nomesModalidades) . '. Selecione apenas turmas da mesma modalidade.';
+            $this->redirect('/matriculas/create');
+            return;
+        }
+
+        // Valida que todas as turmas sejam da mesma modalidade
+        $pdo = \App\Core\Model::getConnection();
+        $sql = "SELECT DISTINCT t.modalidade_id, m.nome as modalidade_nome 
+                FROM turmas t 
+                INNER JOIN modalidades m ON t.modalidade_id = m.id 
+                WHERE t.id IN (" . implode(',', array_fill(0, count($turmasIds), '?')) . ")";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($turmasIds);
+        $modalidades = $stmt->fetchAll();
+        
+        if (count($modalidades) > 1) {
+            $nomesModalidades = array_map(function($m) { return $m['modalidade_nome']; }, $modalidades);
+            $_SESSION['error'] = 'Não é possível matricular em turmas de modalidades diferentes na mesma matrícula. Modalidades selecionadas: ' . implode(', ', $nomesModalidades) . '. Selecione apenas turmas da mesma modalidade.';
+            $this->redirect('/matriculas/create');
+            return;
+        }
+
         // Verifica se aluno já está matriculado em alguma das turmas
         $turmasJaMatriculadas = [];
         foreach ($turmasIds as $turmaId) {

@@ -215,8 +215,11 @@
                                         type="checkbox" 
                                         name="turmas[]" 
                                         value="<?= $turma['id'] ?>"
+                                        data-modalidade-id="<?= $turma['modalidade_id'] ?? '' ?>"
+                                        data-modalidade-nome="<?= htmlspecialchars($modalidade, ENT_QUOTES, 'UTF-8') ?>"
                                         class="turma-checkbox"
                                         style="margin-top: 0.25rem; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;"
+                                        onchange="validarModalidade(this)"
                                     >
                                     <div style="flex: 1;">
                                         <div style="font-weight: 500; margin-bottom: 0.25rem;">
@@ -424,10 +427,47 @@ function calcularDataTermino() {
     }
 }
 
+// Valida que todas as turmas selecionadas sejam da mesma modalidade
+let modalidadeSelecionada = null;
+let modalidadeNomeSelecionada = null;
+
+function validarModalidade(checkbox) {
+    const modalidadeId = checkbox.getAttribute('data-modalidade-id');
+    const modalidadeNome = checkbox.getAttribute('data-modalidade-nome');
+    
+    if (checkbox.checked) {
+        // Se é a primeira seleção, define a modalidade
+        if (modalidadeSelecionada === null) {
+            modalidadeSelecionada = modalidadeId;
+            modalidadeNomeSelecionada = modalidadeNome;
+            atualizarContador();
+            return;
+        }
+        
+        // Se já tem outra modalidade selecionada, desmarca e avisa
+        if (modalidadeSelecionada !== modalidadeId) {
+            checkbox.checked = false;
+            alert('Não é possível selecionar turmas de modalidades diferentes na mesma matrícula.\n\nModalidade já selecionada: ' + modalidadeNomeSelecionada + '\nTentou selecionar: ' + modalidadeNome + '\n\nSelecione apenas turmas da mesma modalidade.');
+            return;
+        }
+    } else {
+        // Se desmarcou, verifica se ainda tem alguma selecionada
+        const outrasSelecionadas = document.querySelectorAll('.turma-checkbox:checked');
+        if (outrasSelecionadas.length === 0) {
+            modalidadeSelecionada = null;
+            modalidadeNomeSelecionada = null;
+        }
+    }
+    
+    atualizarContador();
+}
+
 // Adiciona listeners aos checkboxes
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.turma-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', atualizarContador);
+        checkbox.addEventListener('change', function() {
+            validarModalidade(this);
+        });
     });
     
     // Adiciona listeners para calcular data de término

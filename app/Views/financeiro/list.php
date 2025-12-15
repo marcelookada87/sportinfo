@@ -250,6 +250,11 @@
                                                                 Vencimento: <?= date('d/m/Y', strtotime($grupo['dt_vencimento'])) ?>
                                                                 <?php if ($grupo['is_atrasada'] ?? false): ?>
                                                                     <span style="color: var(--error-color); font-weight: 600;">(Atrasado)</span>
+                                                                    <?php if (!empty($grupo['dias_atraso'])): ?>
+                                                                        <span style="color: var(--text-secondary); font-size: 0.8rem; margin-left: 0.25rem;">
+                                                                            (<?= (int)$grupo['dias_atraso'] ?> dia<?= (int)$grupo['dias_atraso'] > 1 ? 's' : '' ?>)
+                                                                        </span>
+                                                                    <?php endif; ?>
                                                                 <?php endif; ?>
                                                             </small>
                                                         <?php endif; ?>
@@ -359,6 +364,11 @@
                                                         Vencimento: <?= date('d/m/Y', strtotime($grupo['dt_vencimento'])) ?>
                                                         <?php if ($grupo['is_atrasada'] ?? false): ?>
                                                             <span style="color: var(--error-color); font-weight: 600;">(Atrasado)</span>
+                                                            <?php if (!empty($grupo['dias_atraso'])): ?>
+                                                                <span style="color: var(--text-secondary); font-size: 0.8rem; margin-left: 0.25rem;">
+                                                                    (<?= (int)$grupo['dias_atraso'] ?> dia<?= (int)$grupo['dias_atraso'] > 1 ? 's' : '' ?>)
+                                                                </span>
+                                                            <?php endif; ?>
                                                         <?php endif; ?>
                                                     </small>
                                                 <?php endif; ?>

@@ -159,6 +159,24 @@ class FinanceiroController extends Controller
             } else {
                 $grupo['status'] = 'Aberto';
             }
+
+            // Calcula dias de atraso para exibição compacta na lista
+            $grupo['dias_atraso'] = 0;
+            if (!empty($grupo['dt_vencimento'])) {
+                try {
+                    $hoje = new \DateTime();
+                    $hoje->setTime(0, 0, 0);
+                    $vencimento = new \DateTime($grupo['dt_vencimento']);
+                    $vencimento->setTime(0, 0, 0);
+
+                    if ($hoje > $vencimento) {
+                        $grupo['dias_atraso'] = (int)$hoje->diff($vencimento)->days;
+                    }
+                } catch (\Exception $e) {
+                    // Em caso de data inválida, mantém dias_atraso como 0
+                    $grupo['dias_atraso'] = 0;
+                }
+            }
         }
 
         // Busca estatísticas
